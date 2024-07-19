@@ -20,42 +20,4 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-
-import SwiftUI
-
-
-public struct ChatView: View {
-    private var messages: [ChatMessage]
-    
-    public init(messages: [ChatMessage]) {
-        self.messages = messages
-    }
-    public var body: some View {
-        ScrollView {
-            ForEach(self.messages) { message in
-                HStack {
-                    switch message.user {
-                    case .Agent:
-                        Text(message.text)
-                            .roundedBorderStyle()
-
-                        Spacer()
-                    case .User:
-                        Spacer()
-                        Text(message.text)
-                            .roundedBorderStyle()
-                    }
-                }
-            }
-            .padding(32)
-        }
-    }
-}
-
-#Preview {
-    ChatView(messages: [
-        ChatMessage(user: .User, text: "Hello1"),
-        ChatMessage(user: .Agent, text: "Hello2"),
-        ChatMessage(user: .User, text: "Hello3")
-    ])
-}
+import Foundation

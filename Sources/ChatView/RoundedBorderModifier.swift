@@ -20,42 +20,46 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-
 import SwiftUI
 
+struct RoundedBorderModifier: ViewModifier {
+    var backgroundColor: Color
+    var borderColor: Color
+    var cornerRadius: CGFloat
+    var lineWidth: CGFloat
+    var horizontalPadding: CGFloat
+    var verticalPadding: CGFloat
 
-public struct ChatView: View {
-    private var messages: [ChatMessage]
-    
-    public init(messages: [ChatMessage]) {
-        self.messages = messages
-    }
-    public var body: some View {
-        ScrollView {
-            ForEach(self.messages) { message in
-                HStack {
-                    switch message.user {
-                    case .Agent:
-                        Text(message.text)
-                            .roundedBorderStyle()
-
-                        Spacer()
-                    case .User:
-                        Spacer()
-                        Text(message.text)
-                            .roundedBorderStyle()
-                    }
-                }
-            }
-            .padding(32)
-        }
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
+            .background(backgroundColor)
+            .cornerRadius(cornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(borderColor, lineWidth: lineWidth)
+            )
     }
 }
 
-#Preview {
-    ChatView(messages: [
-        ChatMessage(user: .User, text: "Hello1"),
-        ChatMessage(user: .Agent, text: "Hello2"),
-        ChatMessage(user: .User, text: "Hello3")
-    ])
+extension View {
+    func roundedBorderStyle(
+        backgroundColor: Color = .white,
+        borderColor: Color = .blue,
+        cornerRadius: CGFloat = 20,
+        lineWidth: CGFloat = 2,
+        horizontalPadding: CGFloat = 16,
+        verticalPadding: CGFloat = 8
+    ) -> some View {
+        self.modifier(RoundedBorderModifier(
+            backgroundColor: backgroundColor,
+            borderColor: borderColor,
+            cornerRadius: cornerRadius,
+            lineWidth: lineWidth,
+            horizontalPadding: horizontalPadding,
+            verticalPadding: verticalPadding
+        ))
+    }
 }
+
