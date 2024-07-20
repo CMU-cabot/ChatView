@@ -22,12 +22,16 @@
 
 import SwiftUI
 
-public struct ChatMessage: Identifiable, Hashable {
+public class ChatMessage: Identifiable, ObservableObject {
+    public static func == (lhs: ChatMessage, rhs: ChatMessage) -> Bool {
+        return lhs.id == rhs.id
+    }
+
     public var id: UUID
     public var user: ChatUser
-    public var text: String
+    @Published var text: String
     
-    init(id: UUID = UUID(), user: ChatUser, text: String) {
+    public init(id: UUID = UUID(), user: ChatUser, text: String) {
         self.id = id
         self.user = user
         self.text = text

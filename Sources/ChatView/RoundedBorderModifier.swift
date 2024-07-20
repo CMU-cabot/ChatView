@@ -24,6 +24,7 @@ import SwiftUI
 
 struct RoundedBorderModifier: ViewModifier {
     var backgroundColor: Color
+    var foregroundColor: Color
     var borderColor: Color
     var cornerRadius: CGFloat
     var lineWidth: CGFloat
@@ -34,6 +35,7 @@ struct RoundedBorderModifier: ViewModifier {
         content
             .padding(.horizontal, horizontalPadding)
             .padding(.vertical, verticalPadding)
+            .foregroundColor(foregroundColor)
             .background(backgroundColor)
             .cornerRadius(cornerRadius)
             .overlay(
@@ -44,9 +46,10 @@ struct RoundedBorderModifier: ViewModifier {
 }
 
 extension View {
-    func roundedBorderStyle(
-        backgroundColor: Color = .white,
-        borderColor: Color = .blue,
+    func userRoundedBorderStyle(
+        backgroundColor: Color = Color(uiColor: .tintColor),
+        foregroundColor: Color = .white,
+        borderColor: Color = Color(uiColor: .tintColor),
         cornerRadius: CGFloat = 20,
         lineWidth: CGFloat = 2,
         horizontalPadding: CGFloat = 16,
@@ -54,6 +57,27 @@ extension View {
     ) -> some View {
         self.modifier(RoundedBorderModifier(
             backgroundColor: backgroundColor,
+            foregroundColor: foregroundColor,
+            borderColor: borderColor,
+            cornerRadius: cornerRadius,
+            lineWidth: lineWidth,
+            horizontalPadding: horizontalPadding,
+            verticalPadding: verticalPadding
+        ))
+    }
+
+    func agentRoundedBorderStyle(
+        backgroundColor: Color = Color(uiColor: .secondarySystemBackground),
+        foregroundColor: Color = .black,
+        borderColor: Color = Color(uiColor: .secondarySystemBackground),
+        cornerRadius: CGFloat = 20,
+        lineWidth: CGFloat = 2,
+        horizontalPadding: CGFloat = 16,
+        verticalPadding: CGFloat = 8
+    ) -> some View {
+        self.modifier(RoundedBorderModifier(
+            backgroundColor: backgroundColor,
+            foregroundColor: foregroundColor,
             borderColor: borderColor,
             cornerRadius: cornerRadius,
             lineWidth: lineWidth,

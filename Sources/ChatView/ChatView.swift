@@ -25,37 +25,57 @@ import SwiftUI
 
 
 public struct ChatView: View {
-    private var messages: [ChatMessage]
+    var messages: [ChatMessage]
     
-    public init(messages: [ChatMessage]) {
+    init(messages: [ChatMessage]) {
         self.messages = messages
     }
+
     public var body: some View {
         ScrollView {
             ForEach(self.messages) { message in
                 HStack {
-                    switch message.user {
-                    case .Agent:
-                        Text(message.text)
-                            .roundedBorderStyle()
-
-                        Spacer()
-                    case .User:
-                        Spacer()
-                        Text(message.text)
-                            .roundedBorderStyle()
-                    }
+                    MessageView(message: message)
                 }
             }
-            .padding(32)
+            .padding(16)
         }
     }
 }
 
-#Preview {
-    ChatView(messages: [
-        ChatMessage(user: .User, text: "Hello1"),
-        ChatMessage(user: .Agent, text: "Hello2"),
-        ChatMessage(user: .User, text: "Hello3")
-    ])
+struct MessageView: View {
+    @StateObject var message: ChatMessage
+    var duration: Double = 0.2
+    @State private var scale: CGFloat = 0.1
+    @State private var opacity: Double = 0.0
+
+    var body: some View {
+        switch message.user {
+        case .Agent:
+            Text(message.text)
+                .agentRoundedBorderStyle()
+                .scaleEffect(scale)
+                .opacity(opacity)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: duration)) {
+                        scale = 1.0
+                        opacity = 1.0
+                    }
+                }
+
+            Spacer()
+        case .User:
+            Spacer()
+            Text(message.text)
+                .userRoundedBorderStyle()
+                .scaleEffect(scale)
+                .opacity(opacity)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: duration)) {
+                        scale = 1.0
+                        opacity = 1.0
+                    }
+                }
+        }
+    }
 }
