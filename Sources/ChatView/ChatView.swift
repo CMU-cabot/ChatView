@@ -34,9 +34,7 @@ public struct ChatView: View {
     public var body: some View {
         ScrollView {
             ForEach(self.messages) { message in
-                HStack {
-                    MessageView(message: message)
-                }
+                MessageView(message: message)
             }
             .padding(16)
         }
@@ -46,36 +44,44 @@ public struct ChatView: View {
 struct MessageView: View {
     @StateObject var message: ChatMessage
     var duration: Double = 0.2
+    @State private var offset: CGFloat = 32
     @State private var scale: CGFloat = 0.1
     @State private var opacity: Double = 0.0
 
     var body: some View {
         switch message.user {
         case .Agent:
-            Text(message.text)
-                .agentRoundedBorderStyle()
-                .scaleEffect(scale)
-                .opacity(opacity)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: duration)) {
-                        scale = 1.0
-                        opacity = 1.0
+            HStack {
+                Text(message.text)
+                    .agentMessageStyle()
+                    .offset(y: offset)
+                    .opacity(opacity)
+                    //.clipped()
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: duration)) {
+                            scale = 1.0
+                            opacity = 1.0
+                            offset = 0
+                        }
                     }
-                }
-
-            Spacer()
+                Spacer()
+            }
         case .User:
-            Spacer()
-            Text(message.text)
-                .userRoundedBorderStyle()
-                .scaleEffect(scale)
-                .opacity(opacity)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: duration)) {
-                        scale = 1.0
-                        opacity = 1.0
+            HStack {
+                Spacer()
+                Text(message.text)
+                    .userMessageStyle()
+                    .opacity(opacity)
+                    .offset(y: offset)
+                    //.clipped()
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: duration)) {
+                            opacity = 1.0
+                            offset = 0
+                        }
                     }
-                }
+            }
+            .padding(.leading, 32)
         }
     }
 }

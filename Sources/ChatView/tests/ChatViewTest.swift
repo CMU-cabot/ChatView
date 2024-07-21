@@ -34,8 +34,8 @@ public struct ChatViewTest: View {
     let model = ChatViewModel()
     model.messages = [
         ChatMessage(user: .User, text: "Hello1\nHello2\nHello3"),
-        ChatMessage(user: .Agent, text: "Hello2 aaaaaaaaaaa aasd;flaskdjfal;skdfj;alsk djfalskdfjasldkfja;sldkj"),
-        ChatMessage(user: .User, text: "Hello3")
+        ChatMessage(user: .Agent, text: "Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2"),
+        ChatMessage(user: .User, text: "Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 ")
     ]
     return ChatViewTest(model: model)
 }
@@ -46,10 +46,10 @@ public struct ChatViewTest: View {
         model.messages.append(ChatMessage(user: .User, text: "Hello1\nHello2\nHello3"))
     }
     DispatchQueue.main.asyncAfter(deadline: .now()+2) {
-        model.messages.append(ChatMessage(user: .Agent, text: "Hello2 aaaaaaaaaaa aasd;flaskdjfal;skdfj;alsk djfalskdfjasldkfja;sldkj"))
+        model.messages.append(ChatMessage(user: .Agent, text: "Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2"))
     }
     DispatchQueue.main.asyncAfter(deadline: .now()+3) {
-        model.messages.append(ChatMessage(user: .User, text: "Hello3"))
+        model.messages.append(ChatMessage(user: .User, text: "Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 "))
     }
     return ChatViewTest(model: model)
 }

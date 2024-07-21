@@ -46,10 +46,10 @@ struct RoundedBorderModifier: ViewModifier {
 }
 
 extension View {
-    func userRoundedBorderStyle(
-        backgroundColor: Color = Color(uiColor: .tintColor),
-        foregroundColor: Color = .white,
-        borderColor: Color = Color(uiColor: .tintColor),
+    func agentMessageStyle(
+        backgroundColor: Color = Color(uiColor: .systemBackground),
+        foregroundColor: Color = .primary,
+        borderColor: Color = Color(uiColor: .systemBackground),
         cornerRadius: CGFloat = 20,
         lineWidth: CGFloat = 2,
         horizontalPadding: CGFloat = 16,
@@ -66,10 +66,10 @@ extension View {
         ))
     }
 
-    func agentRoundedBorderStyle(
-        backgroundColor: Color = Color(uiColor: .secondarySystemBackground),
-        foregroundColor: Color = .black,
-        borderColor: Color = Color(uiColor: .secondarySystemBackground),
+    func userMessageStyle(
+        backgroundColor: Color = Color(uiColor: .tintColor),
+        foregroundColor: Color = .white,
+        borderColor: Color = Color(uiColor: .tintColor),
         cornerRadius: CGFloat = 20,
         lineWidth: CGFloat = 2,
         horizontalPadding: CGFloat = 16,
