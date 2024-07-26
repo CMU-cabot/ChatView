@@ -139,7 +139,7 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
     fileprivate var maxScaleOfVolumeIndicator:Float = 1.4       // maximum scale for volume indicator
     fileprivate var speed:Float = 0.05      // reducing time
 
-    fileprivate var timer:Timer!            // timer for animation
+    fileprivate var timer:Timer?            // timer for animation
     fileprivate var outFilter:Float = 1.0   // lowpass filter param for max volume
     fileprivate var peakDuration:Float = 0.1// keep peak value for in this interval
     fileprivate var peakTimer:Float = 0
@@ -147,7 +147,7 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
     fileprivate var bScale:Float=1.05       // small indication for mic input
     fileprivate var bDuration:Float=1.5     // breathing duration
 
-    public var label: UILabel!
+    public var label: UILabel?
 
     fileprivate let Frequency:Float = 1.0/60.0
     fileprivate var IconBackgroundSize:CGFloat = 139
@@ -335,13 +335,15 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
 
 
         label = UILabel(frame: CGRect(x: 0, y: 0, width: 1000, height: LabelHeight))
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = UIFont(name: "HelveticaNeue-Medium", size: 22)
+        label?.translatesAutoresizingMaskIntoConstraints = false
+        label?.font = UIFont(name: "HelveticaNeue-Medium", size: 22)
 
-        label.textAlignment = NSTextAlignment.center
-        label.alpha = 0.3
-        label.text = ""
-        view.addSubview(label)
+        label?.textAlignment = NSTextAlignment.center
+        label?.alpha = 0.3
+        label?.text = ""
+        if let label {
+            view.addSubview(label)
+        }
 
         view.addConstraints([
                                 NSLayoutConstraint(
@@ -414,9 +416,9 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
         if let ttm = self.textTimer{
             ttm.invalidate()
         }
-        if self.label != nil {
-            self.label.text = ""
-            self.label.removeFromSuperview()
+        if let label {
+            label.text = ""
+            label.removeFromSuperview()
         }
         self.helperView?.removeFromSuperview()
         self.text = ""
@@ -642,22 +644,27 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
     var textPos:Int = 0
     var text:String?
     public func showText(_ text:String, color:UIColor?) {
-
         let len = text.count
+        if len == 0 {
+            self.text = text
+            self.label?.text = text
+            return
+        }
 
         DispatchQueue.main.async {
             if let clr = color{
-                self.label.textColor = clr
+                self.label?.textColor = clr
             }
-            if let currentText = self.label.text {
+            if let label = self.label,
+               let currentText = label.text {
                 if currentText.count < len ||
-                    self.label.text?.prefix(len-1).description != text {
+                    label.text?.prefix(len-1).description != text {
                     self.textTimer?.invalidate()
-                    self.textPos = (self.label.text?.count)!
+                    self.textPos = (label.text?.count) ?? 0
                     self.textTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(ChatStateButtonViewAnimator.showText2(_:)), userInfo: nil, repeats: true)
                 }
             } else {
-                self.label.text = text
+                self.label?.text = text
             }
             self.text = text
         }
@@ -669,9 +676,11 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
         var part = self.text
         if (self.textPos < (self.text?.count)!) {
             part = self.text?.prefix(self.textPos-1).description
+        } else {
+            timer.invalidate()
         }
         DispatchQueue.main.async {
-            self.label.text = part
+            self.label?.text = part
         }
     }
 

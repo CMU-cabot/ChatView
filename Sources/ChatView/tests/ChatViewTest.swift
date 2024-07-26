@@ -32,7 +32,7 @@ public struct ChatViewTest: View {
             Spacer()
             ChatStateButton(action: {
                 print("ChatStateButton tapped")
-            }, state: $model.chatState)
+            }, state: $model.chatState, text: $model.chatText)
             .frame(width: 150)
             Spacer()
         }

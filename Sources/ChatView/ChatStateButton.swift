@@ -25,9 +25,9 @@ import SwiftUI
 public struct ChatStateButton: View {
     private let action: (()->Void)?
     private let view: ChatStateButtonViewWrapper
-    init(action: (()->Void)? = nil, state: Binding<ChatState>) {
+    init(action: (()->Void)? = nil, state: Binding<ChatState>, text: Binding<String>) {
         self.action = action
-        self.view = ChatStateButtonViewWrapper(action: action, state: state)
+        self.view = ChatStateButtonViewWrapper(action: action, state: state, text: text)
     }
 
     public var body: some View {
@@ -59,10 +59,12 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
     }
 
     @Binding var state: ChatState
+    @Binding var text: String
     private var action: (()->Void)?
-    init(action: (()->Void)? = nil, state: Binding<ChatState>) {
-        self._state = state
+    init(action: (()->Void)? = nil, state: Binding<ChatState>, text: Binding<String>) {
         self.action = action
+        self._state = state
+        self._text = text
         print("create animator")
     }
     func makeUIView(context: Context) -> UIView {
@@ -82,12 +84,14 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
         case .Unknown:
             context.coordinator.animator.inactive()
         }
+        context.coordinator.animator.showText(text)
     }
 }
 
 #Preview("listen") {
     @State var state = ChatState.Inactive
-    let view = ChatStateButton(state: $state)
+    @State var text = ""
+    let view = ChatStateButton(state: $state, text: $text)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         state = .Listening
     }
@@ -97,7 +101,8 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
 
 #Preview("recognize") {
     @State var state = ChatState.Inactive
-    let view = ChatStateButton(state: $state)
+    @State var text = ""
+    let view = ChatStateButton(state: $state, text: $text)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         state = .Recognized
     }
@@ -106,7 +111,8 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
 
 #Preview("speak") {
     @State var state = ChatState.Inactive
-    let view = ChatStateButton(state: $state)
+    @State var text = ""
+    let view = ChatStateButton(state: $state, text: $text)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         state = .Speaking
     }
@@ -115,7 +121,8 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
 
 #Preview("inactive") {
     @State var state = ChatState.Inactive
-    let view = ChatStateButton(state: $state)
+    @State var text = ""
+    let view = ChatStateButton(state: $state, text: $text)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         state = .Inactive
     }
