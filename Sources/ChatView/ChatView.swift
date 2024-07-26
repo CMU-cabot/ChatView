@@ -26,10 +26,8 @@ import SwiftUI
 
 public struct ChatView: View {
     var messages: [ChatMessage]
-    var action: (()->Void)?
 
-    init(action callback: (()->Void)? = nil, messages: [ChatMessage]) {
-        self.action = callback
+    init(messages: [ChatMessage]) {
         self.messages = messages
     }
 
@@ -40,13 +38,6 @@ public struct ChatView: View {
             }
             .padding(16)
         }
-        VStack {
-            Spacer()
-            MicrophoneButton(action: action)
-            .frame(width: 150)
-            Spacer()
-        }
-        .frame(height: 150)
     }
 }
 

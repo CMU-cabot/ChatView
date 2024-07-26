@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2016  IBM Corporation, Carnegie Mellon University and others
+ * Copyright (c) 2014, 2024  IBM Corporation, Carnegie Mellon University and others
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,8 @@ public enum ChatState:String {
     case Listening = "listening"
     case Recognized = "recognized"
 
-    mutating func animTo(_ state:ChatState, target:DialogViewHelper) {
-        let anims:[(from:ChatState,to:ChatState,anim:((DialogViewHelper)->Void))] = [
+    mutating func animTo(_ state:ChatState, target:ChatStateButtonViewAnimator) {
+        let anims:[(from:ChatState,to:ChatState,anim:((ChatStateButtonViewAnimator)->Void))] = [
             (from:.Unknown, to:.Inactive, anim:{$0.inactiveAnim()}),
             (from:.Unknown, to:.Speaking, anim:{$0.speakpopAnim()}),
             (from:.Unknown, to:.Listening, anim:{$0.listenpopAnim()}),
@@ -66,13 +66,13 @@ public enum ChatState:String {
 }
 
 @objc
-public protocol DialogViewDelegate {
+public protocol ChatStateButtonViewDelegate {
     func dialogViewTapped()
 }
 
 @objcMembers
-public class HelperView: UIView {
-    var delegate: DialogViewDelegate?
+public class ChatStateButtonView: UIView {
+    var delegate: ChatStateButtonViewDelegate?
     var bTabEnabled:Bool=false  // tap availability
     public var disabled:Bool = false {
         didSet {
@@ -114,7 +114,7 @@ public class HelperView: UIView {
 }
 
 @objcMembers
-public class DialogViewHelper: NSObject, TTSUIProtocol {
+public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
 
     fileprivate var initialized: Bool = false
 
@@ -159,7 +159,7 @@ public class DialogViewHelper: NSObject, TTSUIProtocol {
     fileprivate var ImageSize:CGFloat = 64
 
     fileprivate var ViewSize:CGFloat = 142
-    public var helperView:HelperView!
+    public var helperView:ChatStateButtonView!
     public var showsBackground:Bool = false
     public var scale:CGFloat = 1.0 {
         didSet {
@@ -185,7 +185,7 @@ public class DialogViewHelper: NSObject, TTSUIProtocol {
         return viewState
     }
 
-    public var delegate: DialogViewDelegate? {
+    public var delegate: ChatStateButtonViewDelegate? {
         didSet {
             if helperView != nil {
                 helperView!.delegate = delegate
@@ -238,7 +238,7 @@ public class DialogViewHelper: NSObject, TTSUIProtocol {
         //        let cy = position.y
         //        let layerView = view
 
-        helperView = HelperView(frame: CGRect(x: 0, y: 0, width: ViewSize, height: ViewSize))
+        helperView = ChatStateButtonView(frame: CGRect(x: 0, y: 0, width: ViewSize, height: ViewSize))
         helperView.bTabEnabled = tapEnabled
 
         helperView.translatesAutoresizingMaskIntoConstraints = false;
@@ -641,7 +641,7 @@ public class DialogViewHelper: NSObject, TTSUIProtocol {
                     self.label.text?.prefix(len-1).description != text {
                     self.textTimer?.invalidate()
                     self.textPos = (self.label.text?.count)!
-                    self.textTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(DialogViewHelper.showText2(_:)), userInfo: nil, repeats: true)
+                    self.textTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(ChatStateButtonViewAnimator.showText2(_:)), userInfo: nil, repeats: true)
                 }
             } else {
                 self.label.text = text

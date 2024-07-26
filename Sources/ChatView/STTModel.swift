@@ -20,52 +20,11 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-import SwiftUI
+import Foundation
+import Speech
 
-public struct MicrophoneButtonTest: View {
-    let mView = MicrophoneButton()
-    public var body: some View {
-        mView
-        Button(action: {
-            mView.helper.listen()
-        }, label: {
-            Text("listen")
-        })
-        .font(.title)
-        Button(action: {
-            mView.helper.speak()
-        }, label: {
-            Text("speak")
-        })
-        .font(.title)
-        Button(action: {
-            mView.helper.recognize()
-        }, label: {
-            Text("recognize")
-        })
-        .font(.title)
-        Button(action: {
-            mView.helper.inactive()
-        }, label: {
-            Text("inactive")
-        })
-        .font(.title)
-        Button(action: {
-            mView.helper.showText("Hello")
-        }, label: {
-            Text("show Text")
-        })
-        .font(.title)
-        Button(action: {
-            mView.helper.showText(" ")
-        }, label: {
-            Text("clear Text")
-        })
-        .font(.title)
-    }
-}
-
-#Preview("MicrophoneButton") {
-    let view = MicrophoneButtonTest()
-    return view
+public class STTModel: ObservableObject {
+    //private let speechRecognizer = SFSpeechRecognizer()
+    //private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    //private var recognitionTask: SFSpeechRecognitionTask?
 }

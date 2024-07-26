@@ -37,7 +37,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
     @IBOutlet weak var button: UIButton!
 
     public var tts:TTSProtocol?
-    public var delegate:DialogViewHelper?
+    public var delegate:ChatStateButtonViewAnimator?
     public var speaking:Bool = false
     public var recognizing:Bool = false
     public var paused:Bool = true

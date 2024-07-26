@@ -22,60 +22,90 @@
 
 import SwiftUI
 
+public struct ChatStateButton: View {
+    private let action: (()->Void)?
+    private let view: ChatStateButtonViewWrapper
+    init(action: (()->Void)? = nil, state: Binding<ChatState>) {
+        self.action = action
+        self.view = ChatStateButtonViewWrapper(action: action, state: state)
+    }
 
-struct MicrophoneButton: UIViewRepresentable {
-    class Delegate: DialogViewDelegate {
-        public var callback: (()->Void)?
+    public var body: some View {
+        view
+    }
+}
+
+struct ChatStateButtonViewWrapper: UIViewRepresentable {
+    class Delegate: ChatStateButtonViewDelegate {
+        public var action: (()->Void)?
         func dialogViewTapped() {
-            if let callback = self.callback {
-                callback()
+            if let action = self.action {
+                action()
             }
         }
     }
-    public let helper = DialogViewHelper()
+    @Binding var state: ChatState
+    public let animator = ChatStateButtonViewAnimator()
     public let delegate = Delegate()
-    init(action callback: (()->Void)? = nil) {
-        self.delegate.callback = callback
+    init(action: (()->Void)? = nil, state: Binding<ChatState>) {
+        self._state = state
+        self.delegate.action = action
     }
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: CGRect(x: 0, y: 0, width: 150, height: 150))
-        helper.setup(view, position: CGPoint(x: 75, y: 75))
-        helper.delegate = self.delegate
+        animator.setup(view, position: CGPoint(x: 75, y: 75))
+        animator.delegate = self.delegate
         return view
     }
     func updateUIView(_ uiView: UIView, context: Context) {
+        switch self.state {
+        case .Inactive:
+            animator.inactive()
+        case .Speaking:
+            animator.speak()
+        case .Listening:
+            animator.listen()
+        case .Recognized:
+            animator.recognize()
+        case .Unknown:
+            animator.inactive()
+        }
     }
 }
 
 #Preview("listen") {
-    let view = MicrophoneButton()
+    @State var state = ChatState.Inactive
+    let view = ChatStateButton(state: $state)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        view.helper.listen()
+        state = .Listening
     }
     return view
 
 }
 
 #Preview("recognize") {
-    let view = MicrophoneButton()
+    @State var state = ChatState.Inactive
+    let view = ChatStateButton(state: $state)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        view.helper.recognize()
+        state = .Recognized
     }
     return view
 }
 
 #Preview("speak") {
-    let view = MicrophoneButton()
+    @State var state = ChatState.Inactive
+    let view = ChatStateButton(state: $state)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        view.helper.speak()
+        state = .Speaking
     }
     return view
 }
 
 #Preview("inactive") {
-    let view = MicrophoneButton()
+    @State var state = ChatState.Inactive
+    let view = ChatStateButton(state: $state)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        view.helper.inactive()
+        state = .Inactive
     }
     return view
 }

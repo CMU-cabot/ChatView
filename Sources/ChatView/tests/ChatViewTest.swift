@@ -24,11 +24,20 @@ import SwiftUI
 
 public struct ChatViewTest: View {
     @StateObject var model: ChatViewModel
+    @StateObject var stt: STTModel
+    @State var mState: ChatState = .Inactive
 
     public var body: some View {
-        ChatView(action: {
-            print("microphoneViewTapped")
-        }, messages: model.messages)
+        ChatView(messages: model.messages)
+        HStack {
+            Spacer()
+            ChatStateButton(action: {
+                print("microphoneViewTapped")
+            }, state: $mState)
+            .frame(width: 150)
+            Spacer()
+        }
+        .frame(height: 150)
     }
 }
 
@@ -39,7 +48,8 @@ public struct ChatViewTest: View {
         ChatMessage(user: .Agent, text: "Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2"),
         ChatMessage(user: .User, text: "Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 ")
     ]
-    return ChatViewTest(model: model)
+    let stt = STTModel()
+    return ChatViewTest(model: model, stt: stt)
 }
 
 #Preview("ChatView Dynamic") {
@@ -53,7 +63,8 @@ public struct ChatViewTest: View {
     DispatchQueue.main.asyncAfter(deadline: .now()+3) {
         model.messages.append(ChatMessage(user: .User, text: "Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 "))
     }
-    return ChatViewTest(model: model)
+    let stt = STTModel()
+    return ChatViewTest(model: model, stt: stt)
 }
 
 #Preview("ChatView Streaming") {
@@ -73,5 +84,6 @@ public struct ChatViewTest: View {
         }
     }
     model.messages.append(message)
-    return ChatViewTest(model: model)
+    let stt = STTModel()
+    return ChatViewTest(model: model, stt: stt)
 }
