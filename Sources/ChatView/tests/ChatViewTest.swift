@@ -26,7 +26,9 @@ public struct ChatViewTest: View {
     @StateObject var model: ChatViewModel
 
     public var body: some View {
-        ChatView(messages: model.messages)
+        ChatView(action: {
+            print("microphoneViewTapped")
+        }, messages: model.messages)
     }
 }
 
@@ -56,7 +58,7 @@ public struct ChatViewTest: View {
 
 #Preview("ChatView Streaming") {
     let model = ChatViewModel()
-    var message = ChatMessage(user: .Agent, text: "")
+    let message = ChatMessage(user: .Agent, text: "")
     let long_sample: String = "This is a sample message. All the message should be read. This is a sample message. All the message should be read."
     var count = 0
     Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) {timer in

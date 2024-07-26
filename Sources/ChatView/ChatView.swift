@@ -26,8 +26,10 @@ import SwiftUI
 
 public struct ChatView: View {
     var messages: [ChatMessage]
-    
-    init(messages: [ChatMessage]) {
+    var action: (()->Void)?
+
+    init(action callback: (()->Void)? = nil, messages: [ChatMessage]) {
+        self.action = callback
         self.messages = messages
     }
 
@@ -38,6 +40,13 @@ public struct ChatView: View {
             }
             .padding(16)
         }
+        VStack {
+            Spacer()
+            MicrophoneButton(action: action)
+            .frame(width: 150)
+            Spacer()
+        }
+        .frame(height: 150)
     }
 }
 
@@ -56,7 +65,6 @@ struct MessageView: View {
                     .agentMessageStyle()
                     .offset(y: offset)
                     .opacity(opacity)
-                    //.clipped()
                     .onAppear {
                         withAnimation(.easeInOut(duration: duration)) {
                             scale = 1.0
@@ -73,7 +81,6 @@ struct MessageView: View {
                     .userMessageStyle()
                     .opacity(opacity)
                     .offset(y: offset)
-                    //.clipped()
                     .onAppear {
                         withAnimation(.easeInOut(duration: duration)) {
                             opacity = 1.0
