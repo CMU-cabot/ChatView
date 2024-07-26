@@ -31,7 +31,7 @@ public struct ChatViewTest: View {
         HStack {
             Spacer()
             ChatStateButton(action: {
-                print("microphoneViewTapped")
+                print("ChatStateButton tapped")
             }, state: $model.chatState)
             .frame(width: 150)
             Spacer()

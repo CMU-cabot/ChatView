@@ -511,7 +511,7 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
     }
 
     fileprivate func shrinkAnim(_ sel:Selector) {
-        print("shrinkAnim")
+        //print("shrinkAnim")
         if (mic?.opacity == 0) {
             Timer.scheduledTimer(timeInterval: 0, target: self, selector: sel, userInfo: nil, repeats: false)
             return
@@ -610,7 +610,7 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
     }
 
     fileprivate func inactiveAnim() {
-        print("inactiveAnim \(self)")
+        //print("inactiveAnim")
         DispatchQueue.main.async {
             self.reset()
             self.indicatorCenter?.opacity = 0
