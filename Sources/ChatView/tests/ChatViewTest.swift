@@ -25,7 +25,6 @@ import SwiftUI
 public struct ChatViewTest: View {
     @StateObject var model: ChatViewModel
     @StateObject var stt: STTModel
-    @State var mState: ChatState = .Inactive
 
     public var body: some View {
         ChatView(messages: model.messages)
@@ -33,7 +32,7 @@ public struct ChatViewTest: View {
             Spacer()
             ChatStateButton(action: {
                 print("microphoneViewTapped")
-            }, state: $mState)
+            }, state: $model.chatState)
             .frame(width: 150)
             Spacer()
         }
@@ -70,7 +69,7 @@ public struct ChatViewTest: View {
 #Preview("ChatView Streaming") {
     let model = ChatViewModel()
     let message = ChatMessage(user: .Agent, text: "")
-    let long_sample: String = "This is a sample message. All the message should be read. This is a sample message. All the message should be read."
+    let long_sample: String = "This is a sample message."
     var count = 0
     Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) {timer in
         let text = long_sample
@@ -80,10 +79,12 @@ public struct ChatViewTest: View {
             message.text += String(character)
             count += 1
         } else {
+            model.chatState = .Inactive
             timer.invalidate()
         }
     }
     model.messages.append(message)
+    model.chatState = .Speaking
     let stt = STTModel()
     return ChatViewTest(model: model, stt: stt)
 }

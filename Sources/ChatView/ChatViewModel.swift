@@ -24,6 +24,7 @@ import Foundation
 
 public class ChatViewModel: ObservableObject {
     @Published public var messages: [ChatMessage] = []
+    @Published var chatState: ChatState = .Inactive
 
     public init() {
     }

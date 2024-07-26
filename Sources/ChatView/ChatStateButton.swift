@@ -36,39 +36,51 @@ public struct ChatStateButton: View {
 }
 
 struct ChatStateButtonViewWrapper: UIViewRepresentable {
-    class Delegate: ChatStateButtonViewDelegate {
-        public var action: (()->Void)?
+    class Coordinator: NSObject, ChatStateButtonViewDelegate {
+        let view = UIView(frame: CGRect(x: 0, y: 0, width: 150, height: 150))
+        let animator = ChatStateButtonViewAnimator()
+        var action: (()->Void)?
+        override init() {
+            animator.setup(view, position: CGPoint(x: 75, y: 75))
+            super.init()
+            animator.delegate = self
+        }
         func dialogViewTapped() {
             if let action = self.action {
                 action()
             }
         }
     }
+
+    func makeCoordinator() -> Coordinator {
+        let coordinator = Coordinator()
+        coordinator.action = action
+        return coordinator
+    }
+
     @Binding var state: ChatState
-    public let animator = ChatStateButtonViewAnimator()
-    public let delegate = Delegate()
+    private var action: (()->Void)?
     init(action: (()->Void)? = nil, state: Binding<ChatState>) {
         self._state = state
-        self.delegate.action = action
+        self.action = action
+        print("create animator")
     }
     func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: CGRect(x: 0, y: 0, width: 150, height: 150))
-        animator.setup(view, position: CGPoint(x: 75, y: 75))
-        animator.delegate = self.delegate
-        return view
+        print("makeUIView")
+        return context.coordinator.view
     }
     func updateUIView(_ uiView: UIView, context: Context) {
         switch self.state {
         case .Inactive:
-            animator.inactive()
+            context.coordinator.animator.inactive()
         case .Speaking:
-            animator.speak()
+            context.coordinator.animator.speak()
         case .Listening:
-            animator.listen()
+            context.coordinator.animator.listen()
         case .Recognized:
-            animator.recognize()
+            context.coordinator.animator.recognize()
         case .Unknown:
-            animator.inactive()
+            context.coordinator.animator.inactive()
         }
     }
 }

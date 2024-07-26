@@ -118,18 +118,18 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
 
     fileprivate var initialized: Bool = false
 
-    fileprivate var background: AnimLayer!          // first circle
-    fileprivate var circle: AnimLayer!              // second circle
-    fileprivate var indicatorCenter: AnimLayer!     // speak indicator center / volume indicator
-    fileprivate var indicatorLeft: AnimLayer!       // speak indicator left
-    fileprivate var indicatorRight: AnimLayer!      // speak indicator right
+    fileprivate var background: AnimLayer?          // first circle
+    fileprivate var circle: AnimLayer?              // second circle
+    fileprivate var indicatorCenter: AnimLayer?     // speak indicator center / volume indicator
+    fileprivate var indicatorLeft: AnimLayer?       // speak indicator left
+    fileprivate var indicatorRight: AnimLayer?      // speak indicator right
     public var mainColor: CGColor = AnimLayer.blue
     public var subColor: CGColor = AnimLayer.white
     public var backgroundColor: CGColor = AnimLayer.gray
-    fileprivate var micback: AnimLayer!     // mic background
-    fileprivate var mic: CALayer!           // mic image
-    fileprivate var micimgw:CGImage!        // mic white image
-    fileprivate var micimgr:CGImage!        // mic red image
+    fileprivate var micback: AnimLayer?     // mic background
+    fileprivate var mic: CALayer?           // mic image
+    fileprivate var micimgw:CGImage?        // mic white image
+    fileprivate var micimgr:CGImage?        // mic red image
     fileprivate var power:Float = 0.0       // mic audio power
     fileprivate var recording = false       // recording flag
 
@@ -301,35 +301,37 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
 
         background = make(IconBackgroundSize, max: IconBackgroundSize, x: cx, y: cy,
                           color: showsBackground ? backgroundColor : AnimLayer.transparent)
-        background.zPosition = 0
+        background?.zPosition = 0
         circle = make(IconCircleSize, max: IconCircleSize, x: cx, y: cy, color: subColor)
-        circle.zPosition = 1
+        circle?.zPosition = 1
 
         indicatorCenter = make(IconSmallSize, max:IconSmallSize*2, x: cx, y: cy, color:mainColor)
-        indicatorCenter.zPosition = 2
-        indicatorCenter.opacity = 0
+        indicatorCenter?.zPosition = 2
+        indicatorCenter?.opacity = 0
         indicatorLeft = make(IconSmallSize, max:IconSmallSize*2, x: cx-SmallIconPadding, y: cy, color:mainColor)
-        indicatorLeft.zPosition = 2
-        indicatorLeft.opacity = 0
+        indicatorLeft?.zPosition = 2
+        indicatorLeft?.opacity = 0
         indicatorRight = make(IconSmallSize, max:IconSmallSize*2, x: cx+SmallIconPadding, y: cy, color:mainColor)
-        indicatorRight.zPosition = 2
-        indicatorRight.opacity = 0
+        indicatorRight?.zPosition = 2
+        indicatorRight?.opacity = 0
 
         micback = make(IconSize, max:IconSize*2, x: cx, y: cy, color:mainColor)
-        micback.zPosition = 3
-        micback.opacity = 0
+        micback?.zPosition = 3
+        micback?.opacity = 0
         mic = CALayer()
-        mic.zPosition = 4
-        mic.opacity = 0
+        mic?.zPosition = 4
+        mic?.opacity = 0
         let bundle: Bundle = Bundle.module
         let micMask: CGImage! = UIImage(named: "Mic_White", in: bundle, compatibleWith: nil)?.cgImage
         micimgw = icon(micMask, color: subColor)
         micimgr = icon(micMask, color: mainColor)
-        mic.contents = micimgw
-        mic.bounds = CGRect(x: 0, y: 0, width: ImageSize, height: ImageSize)
-        mic.edgeAntialiasingMask = CAEdgeAntialiasingMask.layerLeftEdge.union(CAEdgeAntialiasingMask.layerRightEdge).union(CAEdgeAntialiasingMask.layerTopEdge).union(CAEdgeAntialiasingMask.layerBottomEdge)
-        mic.position = CGPoint(x: cx, y: cy)
-        layerView?.layer.addSublayer(mic)
+        mic?.contents = micimgw
+        mic?.bounds = CGRect(x: 0, y: 0, width: ImageSize, height: ImageSize)
+        mic?.edgeAntialiasingMask = CAEdgeAntialiasingMask.layerLeftEdge.union(CAEdgeAntialiasingMask.layerRightEdge).union(CAEdgeAntialiasingMask.layerTopEdge).union(CAEdgeAntialiasingMask.layerBottomEdge)
+        mic?.position = CGPoint(x: cx, y: cy)
+        if let mic {
+            layerView?.layer.addSublayer(mic)
+        }
 
 
         label = UILabel(frame: CGRect(x: 0, y: 0, width: 1000, height: LabelHeight))
@@ -396,6 +398,13 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
             return
         }
         //print("removeAllAnimations")
+        guard let background,
+              let circle,
+              let indicatorLeft,
+              let indicatorRight,
+              let indicatorCenter,
+              let micback,
+              let mic else { return }
         for l:CALayer in [background, circle, indicatorCenter, indicatorLeft, indicatorRight, micback, mic] {
             l.removeAllAnimations()
         }
@@ -418,48 +427,52 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
     fileprivate func recognizeAnim() {
         //print("recognizeAnim")
         reset()
-        circle.color = mainColor
-        micback.color = subColor
-        circle.setNeedsDisplay()
-        micback.setNeedsDisplay()
-        mic.contents = micimgr
-        indicatorCenter.opacity = 0
-        indicatorLeft.opacity = 0
-        indicatorRight.opacity = 0
-        micback.opacity = 1
-        mic.opacity = 1
+        circle?.color = mainColor
+        micback?.color = subColor
+        circle?.setNeedsDisplay()
+        micback?.setNeedsDisplay()
+        mic?.contents = micimgr
+        indicatorCenter?.opacity = 0
+        indicatorLeft?.opacity = 0
+        indicatorRight?.opacity = 0
+        micback?.opacity = 1
+        mic?.opacity = 1
     }
 
     fileprivate func listenpopAnim() {
         //print("listenpopAnim")
         reset()
-        indicatorCenter.opacity = 0
-        indicatorLeft.opacity = 0
-        indicatorRight.opacity = 0
-        micback.opacity = 1
-        mic.opacity = 0
-        mic.contents = micimgw
-        micback.size = IconSize
-        circle.color = subColor
-        micback.color = mainColor
-        circle.setNeedsDisplay()
-        micback.setNeedsDisplay()
+        indicatorCenter?.opacity = 0
+        indicatorLeft?.opacity = 0
+        indicatorRight?.opacity = 0
+        micback?.opacity = 1
+        mic?.opacity = 0
+        mic?.contents = micimgw
+        micback?.size = IconSize
+        circle?.color = subColor
+        micback?.color = mainColor
+        circle?.setNeedsDisplay()
+        micback?.setNeedsDisplay()
 
 
         //let a1 = AnimLayer.scale(0.1, current:1, scale:IconSize, type:CAMediaTimingFunctionName.linear)
         //indicatorCenter.add(a1, forKey: "scale")
 
-        let a0 = AnimLayer.dissolve(0, type:CAMediaTimingFunctionName.linear)
-        micback.add(a0, forKey: "dissolve1")
+        if let micback {
+            let a0 = AnimLayer.dissolve(0, type:CAMediaTimingFunctionName.linear)
+            micback.add(a0, forKey: "dissolve1")
+            
+            let a1 = AnimLayer.bounds_size(0.1, from: IconSmallSize / IconSize * micback.bounds.size.width,
+                                           to: micback.bounds.size.width, type:CAMediaTimingFunctionName.linear)
+            let a2 = AnimLayer.pop(0.1, scale: 1.2, x: 0, y: 0, type: CAMediaTimingFunctionName.linear)
+            micback.add(a1, forKey: "scale")
+            micback.add(a2, forKey: "pop")
+        }
 
-        let a1 = AnimLayer.bounds_size(0.1, from: IconSmallSize / IconSize * micback.bounds.size.width,
-                                       to: micback.bounds.size.width, type:CAMediaTimingFunctionName.linear)
-        let a2 = AnimLayer.pop(0.1, scale: 1.2, x: 0, y: 0, type: CAMediaTimingFunctionName.linear)
-        micback.add(a1, forKey: "scale")
-        micback.add(a2, forKey: "pop")
-
-        let a3 = AnimLayer.delay(AnimLayer.dissolve(0.1, type:CAMediaTimingFunctionName.linear), second:0.1)
-        mic.add(a3, forKey: "dissolve2")
+        if let mic {
+            let a3 = AnimLayer.delay(AnimLayer.dissolve(0.1, type:CAMediaTimingFunctionName.linear), second:0.1)
+            mic.add(a3, forKey: "dissolve2")
+        }
 
         Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(listenAnim), userInfo: nil, repeats: false)
     }
@@ -467,63 +480,64 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
     @objc fileprivate func listenAnim() {
         //print("listenAnim")
         reset()
-        circle.color = subColor
-        micback.color = mainColor
-        circle.setNeedsDisplay()
-        micback.setNeedsDisplay()
-        mic.opacity = 1
-        mic.contents = micimgw
-        indicatorCenter.size = IconSize
-        indicatorCenter.opacity = 1
-        indicatorLeft.opacity = 0
-        indicatorRight.opacity = 0
-        micback.size = IconSize
-        micback.opacity = 1
+        circle?.color = subColor
+        micback?.color = mainColor
+        circle?.setNeedsDisplay()
+        micback?.setNeedsDisplay()
+        mic?.opacity = 1
+        mic?.contents = micimgw
+        indicatorCenter?.size = IconSize
+        indicatorCenter?.opacity = 1
+        indicatorLeft?.opacity = 0
+        indicatorRight?.opacity = 0
+        micback?.size = IconSize
+        micback?.opacity = 1
 
-        let a2 = AnimLayer.pulse(Double(bDuration), size: IconSize, scale: CGFloat(bScale))
-        a2.repeatCount = 10000000
-        micback.add(a2, forKey: "listen-breathing")
-
+        if let micback {
+            let a2 = AnimLayer.pulse(Double(bDuration), size: IconSize, scale: CGFloat(bScale))
+            a2.repeatCount = 10000000
+            micback.add(a2, forKey: "listen-breathing")
+        }
         timer = Timer.scheduledTimer(timeInterval: Double(Frequency), target: self, selector: #selector(listening(_:)), userInfo: nil, repeats: true)
     }
-
+        
     @objc fileprivate func listening(_ timer:Timer) {
         var p:Float = power - threthold
         p = p / (MaxDB-threthold)
         p = max(p, 0)
 
-        indicatorCenter.size = min(CGFloat(p * (maxScaleOfVolumeIndicator - 1.0) + 1.0) * IconSize, IconCircleSize)
-        self.indicatorCenter.setNeedsDisplay()
+        indicatorCenter?.size = min(CGFloat(p * (maxScaleOfVolumeIndicator - 1.0) + 1.0) * IconSize, IconCircleSize)
+        self.indicatorCenter?.setNeedsDisplay()
     }
 
     fileprivate func shrinkAnim(_ sel:Selector) {
-        //print("shrinkAnim")
-        if (mic.opacity == 0) {
+        print("shrinkAnim")
+        if (mic?.opacity == 0) {
             Timer.scheduledTimer(timeInterval: 0, target: self, selector: sel, userInfo: nil, repeats: false)
             return
         }
 
         DispatchQueue.main.async {
             self.reset()
-            self.indicatorCenter.opacity = 1
-            self.indicatorLeft.opacity = 0
-            self.indicatorRight.opacity = 0
-            self.micback.opacity = 1
-            self.mic.opacity = 1
-            self.mic.contents = self.micimgw
-            self.circle.color = self.subColor
-            self.micback.color = self.mainColor
-            self.circle.setNeedsDisplay()
-            self.micback.setNeedsDisplay()
+            self.indicatorCenter?.opacity = 1
+            self.indicatorLeft?.opacity = 0
+            self.indicatorRight?.opacity = 0
+            self.micback?.opacity = 1
+            self.mic?.opacity = 1
+            self.mic?.contents = self.micimgw
+            self.circle?.color = self.subColor
+            self.micback?.color = self.mainColor
+            self.circle?.setNeedsDisplay()
+            self.micback?.setNeedsDisplay()
 
             let a1 = AnimLayer.dissolveOut(0.2, type: CAMediaTimingFunctionName.easeOut)
             let a2 = AnimLayer.bounds_size(0.2, from: self.IconCircleSize*3, to: 0.0, type: CAMediaTimingFunctionName.easeOut)
 
-            self.mic.add(a1, forKey: "shrink")
-            self.micback.add(a1, forKey: "shrink")
-            self.indicatorCenter.add(a2, forKey: "shrink")
-            self.indicatorLeft.add(a2, forKey: "shrink")
-            self.indicatorRight.add(a2, forKey: "shrink")
+            self.mic?.add(a1, forKey: "shrink")
+            self.micback?.add(a1, forKey: "shrink")
+            self.indicatorCenter?.add(a2, forKey: "shrink")
+            self.indicatorLeft?.add(a2, forKey: "shrink")
+            self.indicatorRight?.add(a2, forKey: "shrink")
 
             Timer.scheduledTimer(timeInterval: 0.3, target: self, selector: sel, userInfo: nil, repeats: false)
         }
@@ -534,34 +548,34 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
         //print("speakpopAnim")
         DispatchQueue.main.async {
             self.reset()
-            self.indicatorCenter.opacity = 1
-            self.indicatorLeft.opacity = 1
-            self.indicatorRight.opacity = 1
-            self.indicatorCenter.size = self.IconSmallSize
-            self.indicatorLeft.size = self.IconSmallSize
-            self.indicatorRight.size = self.IconSmallSize
-            self.micback.opacity = 0
-            self.mic.opacity = 0
-            self.mic.contents = nil
+            self.indicatorCenter?.opacity = 1
+            self.indicatorLeft?.opacity = 1
+            self.indicatorRight?.opacity = 1
+            self.indicatorCenter?.size = self.IconSmallSize
+            self.indicatorLeft?.size = self.IconSmallSize
+            self.indicatorRight?.size = self.IconSmallSize
+            self.micback?.opacity = 0
+            self.mic?.opacity = 0
+            self.mic?.contents = nil
 
-            self.circle.color = self.subColor
-            self.micback.color = self.mainColor
-            self.circle.setNeedsDisplay()
-            self.micback.setNeedsDisplay()
+            self.circle?.color = self.subColor
+            self.micback?.color = self.mainColor
+            self.circle?.setNeedsDisplay()
+            self.micback?.setNeedsDisplay()
 
             let dissolve = AnimLayer.dissolve(0.2, type: CAMediaTimingFunctionName.easeOut)
             let scale = AnimLayer.bounds_size(0.2, from: 1, to: self.IconSmallSize*2, type:CAMediaTimingFunctionName.easeIn)
 
-            self.indicatorLeft.add(dissolve, forKey: "speakpop1l")
-            self.indicatorLeft.add(scale, forKey: "speakpop2l")
-            self.indicatorCenter.add(dissolve, forKey: "speakpop1c")
-            self.indicatorCenter.add(scale, forKey: "speakpop2c")
-            self.indicatorRight.add(dissolve, forKey: "speakpop1r")
-            self.indicatorRight.add(scale, forKey: "speakpop2r")
+            self.indicatorLeft?.add(dissolve, forKey: "speakpop1l")
+            self.indicatorLeft?.add(scale, forKey: "speakpop2l")
+            self.indicatorCenter?.add(dissolve, forKey: "speakpop1c")
+            self.indicatorCenter?.add(scale, forKey: "speakpop2c")
+            self.indicatorRight?.add(dissolve, forKey: "speakpop1r")
+            self.indicatorRight?.add(scale, forKey: "speakpop2r")
 
-            self.indicatorLeft.setNeedsDisplay()
-            self.indicatorCenter.setNeedsDisplay()
-            self.indicatorRight.setNeedsDisplay()
+            self.indicatorLeft?.setNeedsDisplay()
+            self.indicatorCenter?.setNeedsDisplay()
+            self.indicatorRight?.setNeedsDisplay()
 
             Timer.scheduledTimer(timeInterval: 0.2, target: self,
                                  selector: #selector(self.speakAnim),
@@ -573,51 +587,50 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
         //print("speakAnim")
         DispatchQueue.main.async {
             self.reset()
-            self.indicatorCenter.removeAllAnimations()
-            self.indicatorLeft.removeAllAnimations()
-            self.indicatorRight.removeAllAnimations()
-            self.indicatorCenter.opacity = 1
-            self.indicatorLeft.opacity = 1
-            self.indicatorRight.opacity = 1
-            self.indicatorCenter.size = self.IconSmallSize;
-            self.indicatorLeft.size = self.IconSmallSize;
-            self.indicatorRight.size = self.IconSmallSize;
-            self.indicatorCenter.setNeedsDisplay()
-            self.indicatorLeft.setNeedsDisplay()
-            self.indicatorRight.setNeedsDisplay()
+            self.indicatorCenter?.removeAllAnimations()
+            self.indicatorLeft?.removeAllAnimations()
+            self.indicatorRight?.removeAllAnimations()
+            self.indicatorCenter?.opacity = 1
+            self.indicatorLeft?.opacity = 1
+            self.indicatorRight?.opacity = 1
+            self.indicatorCenter?.size = self.IconSmallSize;
+            self.indicatorLeft?.size = self.IconSmallSize;
+            self.indicatorRight?.size = self.IconSmallSize;
+            self.indicatorCenter?.setNeedsDisplay()
+            self.indicatorLeft?.setNeedsDisplay()
+            self.indicatorRight?.setNeedsDisplay()
 
             let pulse = AnimLayer.pulse(1/4.0, size: self.IconSmallSize, scale:CGFloat(self.bScale))
             pulse.repeatCount = 1000
 
-            self.indicatorLeft.add(pulse, forKey: "speak1")
-            self.indicatorCenter.add(pulse, forKey: "speak1")
-            self.indicatorRight.add(pulse, forKey: "speak1")
+            self.indicatorLeft?.add(pulse, forKey: "speak1")
+            self.indicatorCenter?.add(pulse, forKey: "speak1")
+            self.indicatorRight?.add(pulse, forKey: "speak1")
         }
     }
 
     fileprivate func inactiveAnim() {
-        //print("inactiveAnim")
+        print("inactiveAnim \(self)")
         DispatchQueue.main.async {
             self.reset()
-            self.indicatorCenter.opacity = 0
-            self.indicatorLeft.opacity = 0
-            self.indicatorRight.opacity = 0
-            self.micback.opacity = 0
-            self.mic.opacity = 0
-            self.indicatorCenter.size = self.IconSmallSize
-            self.micback.size = self.IconSize
-            self.circle.color = self.subColor
-            self.micback.color = self.backgroundColor
-            self.circle.setNeedsDisplay()
-            self.micback.setNeedsDisplay()
-            self.mic.contents = self.micimgr
+            self.indicatorCenter?.opacity = 0
+            self.indicatorLeft?.opacity = 0
+            self.indicatorRight?.opacity = 0
+            self.micback?.opacity = 0
+            self.mic?.opacity = 0
+            self.indicatorCenter?.size = self.IconSmallSize
+            self.micback?.size = self.IconSize
+            self.circle?.color = self.subColor
+            self.micback?.color = self.backgroundColor
+            self.circle?.setNeedsDisplay()
+            self.micback?.setNeedsDisplay()
+            self.mic?.contents = self.micimgr
 
             let a1 = AnimLayer.dissolve(0.2, type: CAMediaTimingFunctionName.easeOut)
 
-            self.micback.add(a1, forKey: "inactive")
-            self.mic.add(a1, forKey: "inactive")
+            self.micback?.add(a1, forKey: "inactive")
+            self.mic?.add(a1, forKey: "inactive")
         }
-
     }
 
     // MARK: - Showing Text
