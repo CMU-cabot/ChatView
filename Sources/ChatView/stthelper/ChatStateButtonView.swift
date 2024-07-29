@@ -493,12 +493,12 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
         indicatorLeft?.opacity = 0
         indicatorRight?.opacity = 0
         micback?.size = IconSize
-        micback?.opacity = 0
+        micback?.opacity = 1
 
         if let micback {
             let a2 = AnimLayer.pulse(Double(bDuration), size: IconSize, scale: CGFloat(bScale))
             a2.repeatCount = 10000000
-            //micback.add(a2, forKey: "listen-breathing")
+            micback.add(a2, forKey: "listen-breathing")
         }
         DispatchQueue.main.async {
             self.timer = Timer.scheduledTimer(timeInterval: Double(self.Frequency), target: self, selector: #selector(self.listening(_:)), userInfo: nil, repeats: true)

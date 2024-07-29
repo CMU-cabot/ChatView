@@ -72,7 +72,6 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
         self._state = state
         self._text = text
         self._power = power
-        print("create animator")
     }
     func makeUIView(context: Context) -> UIView {
         print("makeUIView")

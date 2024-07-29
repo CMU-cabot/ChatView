@@ -25,8 +25,15 @@ import ChatView
 
 class ChatClientMock: ChatClient {
     var delegate: ChatClientDelegate?
-
+    let welcome_text = "Hello"
     func send(message: String) {
+        if message.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                guard let delegate = self.delegate else { return }
+                delegate.receive(identifier: UUID().uuidString, text: self.welcome_text)
+            }
+            return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             guard let delegate = self.delegate else { return }
             delegate.receive(identifier: UUID().uuidString, text: message)

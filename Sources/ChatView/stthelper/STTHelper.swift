@@ -47,7 +47,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
     public var recognizing:Bool = false
     public var paused:Bool = true
     public var restarting:Bool = true
-    var last_actions: [([String],(String, UInt64)->Void)]?
+    var last_action: ((String, UInt64)->Void)?
     var last_failure:(NSError)->Void = {arg in}
     var last_timeout:()->Void = { () in}
     var last_text: String = ""
@@ -175,7 +175,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             if Float64(self.aveCount) >= sampleRate / updateRate {
                 // max is 110db
                 let power = 110 + (log10((ave + 1) / Float(sampleRate / updateRate)) - log10(32768)) * 20
-                print("setMaxPowerLambda power=\(power), count=\(self.aveCount)")
+                //print("setMaxPowerLambda power=\(power), count=\(self.aveCount)")
                 self.delegate?.setPower(power)
                 ave = 0
                 aveCount = 0
@@ -183,7 +183,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         }
     }
 
-    func startRecognize(_ actions: [([String],(String, UInt64)->Void)], failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
+    public func startRecognize(_ action: @escaping (String, UInt64)->Void, failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
         self.paused = false
         
         self.last_timeout = timeout
@@ -199,17 +199,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             }
             let complete:()->Void = {
                 if weakself.last_text.count == 0 { return }
-                for action in actions {
-                    let patterns = action.0
-                    for pattern in patterns {
-                        if weakself.checkPattern(pattern, weakself.last_text) {
-                            NSLog("Matched pattern = \(pattern)")
-                            weakself.endRecognize();
-                            weakself.delegate?.recognize()
-                            return (action.1)(weakself.last_text, 0)
-                        }
-                    }
-                }
+                action(weakself.last_text, 0)
             }
 
             if e != nil {
@@ -312,14 +302,14 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         }
     }
     
-    public func listen(_ actions: [([String],(String, UInt64)->Void)], selfvoice: String?, speakendactions:[((String)->Void)]?,avrdelegate:AVAudioRecorderDelegate?, failure:@escaping (NSError)->Void, timeout:@escaping ()->Void) {
+    public func listen(_ action: @escaping (String, UInt64)->Void ,selfvoice: String?, speakendactions:[((String)->Void)]?,avrdelegate:AVAudioRecorderDelegate?, failure:@escaping (NSError)->Void, timeout:@escaping ()->Void) {
         
         if (speaking) {
             NSLog("TTS is speaking so this listen is eliminated")
             return
         }
-        NSLog("Listen \"\(selfvoice ?? "")\" \(actions)")
-        self.last_actions = actions
+        NSLog("Listen \"\(selfvoice ?? "")\" \(action)")
+        self.last_action = action
 
         self.stoptimer()
         delegate?.speak()
@@ -341,7 +331,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
 
             DispatchQueue.main.asyncAfter(deadline: .now()+self.waitDelay) {
                 self.startPWCaptureSession()//alternative
-                self.startRecognize(actions, failure: failure, timeout: timeout)
+                self.startRecognize(action, failure: failure, timeout: timeout)
 
                 self.delegate?.showText(NSLocalizedString("SPEAK_NOW", tableName: nil, bundle: Bundle.module, value: "", comment:"Speak Now!"),color: UIColor.black)
                 self.delegate?.listen()
@@ -379,7 +369,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
     public func restartRecognize() {
         self.paused = false;
         self.restarting = true;
-        if let actions = self.last_actions {
+        if let actions = self.last_action {
             self.tts?.vibrate()
             self.tts?.playVoiceRecoStart()
 
@@ -388,21 +378,5 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
                 self.startRecognize(actions, failure:self.last_failure, timeout:self.last_timeout)
             }
         }
-    }
-
-    func checkPattern(_ pattern: String?, _ text: String?) -> Bool {
-        if text != nil {
-            do {
-                var regex:NSRegularExpression?;
-                try regex = NSRegularExpression(pattern: pattern!, options: NSRegularExpression.Options.caseInsensitive)
-                if (regex?.matches(in: text!, options: NSRegularExpression.MatchingOptions.reportProgress, range: NSMakeRange(0, (text?.count)!)).count)! > 0 {
-                    return true
-                }
-            } catch {
-                
-            }
-        }
-        
-        return false
     }
 }

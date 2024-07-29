@@ -30,6 +30,7 @@ public class ChatViewModel: ObservableObject  {
     @Published var chatState: ChatState = .Inactive
     @Published var chatText: String = ""
     var stt = STTHelper()
+    var tts = SimpleTTS.shared
     var client = ChatClientMock()
 
     public init() {
@@ -37,11 +38,27 @@ public class ChatViewModel: ObservableObject  {
         stt.tts = SimpleTTS.shared
         client.delegate = self
     }
+    public func startChat() {
+        print("startChat")
+        client.send(message: "")
+    }
+    private func process(text: String, for user: ChatUser) {
+        print("process \(text) \(user)")
+        messages.append(ChatMessage(user: user, text: text))
+        switch user {
+        case .Agent:
+            self.stt.listen({ text, code in
+                self.process(text: text, for: .User)
+            }, selfvoice: text, speakendactions: nil, avrdelegate: nil, failure: { error in }, timeout: { })
+        case .User:
+            client.send(message: text)
+        }
+    }
 }
 
 extension ChatViewModel: ChatClientDelegate {
     public func receive(identifier: String, text: String) {
-        messages.append(ChatMessage(user: .Agent, text: text))
+        process(text: text, for: .Agent)
     }
 }
 

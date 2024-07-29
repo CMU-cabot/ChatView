@@ -59,10 +59,10 @@ class SimpleTTS: NSObject, TTSProtocol, AVSpeechSynthesizerDelegate {
     }
     
     func vibrate() {
-        
+        print("needs to implement vibrate")
     }
     
     func playVoiceRecoStart() {
-        
+        print("needs to implement playVoiceRecoStart")
     }
 }
