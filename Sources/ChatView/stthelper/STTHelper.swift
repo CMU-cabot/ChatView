@@ -24,7 +24,15 @@ import Foundation
 import UIKit
 import AVFoundation
 import Speech
+import SwiftUI
 
+public protocol STTHelperDelegate {
+    func setPower(_ power: Float)
+    func showText(_ text: String, color: UIColor?)
+    func listen()
+    func speak()
+    func recognize()
+}
 
 @objcMembers
 open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SFSpeechRecognizerDelegate {
@@ -34,7 +42,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
     fileprivate var recognitionTask: SFSpeechRecognitionTask?
     
     public var tts:TTSProtocol?
-    public var delegate:ChatStateButtonViewAnimator?
+    public var delegate:STTHelperDelegate?
     public var speaking:Bool = false
     public var recognizing:Bool = false
     public var paused:Bool = true
@@ -168,7 +176,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
                 // max is 110db
                 let power = 110 + (log10((ave + 1) / Float(sampleRate / updateRate)) - log10(32768)) * 20
                 print("setMaxPowerLambda power=\(power), count=\(self.aveCount)")
-                self.delegate?.setMaxPower(power)
+                self.delegate?.setPower(power)
                 ave = 0
                 aveCount = 0
             }
@@ -265,13 +273,13 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             let length:Int = str.count
             NSLog("Result = \(str), Length = \(length), isFinal = \(isFinal)");
             if (str.count > 0) {
-                weakself.delegate?.showText(str);
+                weakself.delegate?.showText(str, color: nil);
                 if isFinal{
                     complete()
                 }
             }else{
                 if isFinal{
-                    weakself.delegate?.showText("?")
+                    weakself.delegate?.showText("?", color: nil)
                 }
             }
         })
@@ -315,7 +323,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
 
         self.stoptimer()
         delegate?.speak()
-        delegate?.showText(" ")
+        delegate?.showText(" ", color: nil)
 
         self.tts?.speak(selfvoice) {
             if (!self.speaking) {

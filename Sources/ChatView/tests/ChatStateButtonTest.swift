@@ -25,8 +25,9 @@ import SwiftUI
 public struct ChatStateButtonTest: View {
     @State var state: ChatState = .Inactive
     @State var text: String = ""
+    @State var power: Float = 0
     public var body: some View {
-        ChatStateButton(state: $state, text: $text)
+        ChatStateButton(state: $state, text: $text, power: $power)
         Button(action: {
             state = .Listening
         }, label: {

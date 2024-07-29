@@ -21,43 +21,12 @@
  *******************************************************************************/
 
 import Foundation
-import UIKit
-import ChatView
 
-public class ChatViewModel: ObservableObject  {
-    @Published public var messages: [ChatMessage] = []
-    @Published var power: Float = 0
-    @Published var chatState: ChatState = .Inactive
-    @Published var chatText: String = ""
-    var stt = STTHelper()
-    var client = ChatClientMock()
-
-    public init() {
-        stt.delegate = self
-        client.delegate = self
-    }
+public protocol ChatClientDelegate {
+    func receive(identifier: String, text: String)
 }
 
-extension ChatViewModel: ChatClientDelegate {
-    public func receive(identifier: String, text: String) {
-        messages.append(ChatMessage(user: .Agent, text: text))
-    }
-}
-
-extension ChatViewModel: STTHelperDelegate {
-    public func setPower(_ power: Float) {
-        self.power = power
-    }
-    public func showText(_ text: String, color: UIColor?) {
-        self.chatText = text
-    }
-    public func listen() {
-        self.chatState = .Listening
-    }
-    public func speak() {
-        self.chatState = .Speaking
-    }
-    public func recognize() {
-        self.chatState = .Recognized
-    }
+public protocol ChatClient {
+    var delegate: ChatClientDelegate? { get set }
+    func send(message: String)
 }
