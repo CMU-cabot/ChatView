@@ -36,4 +36,8 @@ public class ChatMessage: Identifiable, ObservableObject {
         self.user = user
         self.text = text
     }
+    
+    public func append(text: String) {
+        self.text += text
+    }
 }

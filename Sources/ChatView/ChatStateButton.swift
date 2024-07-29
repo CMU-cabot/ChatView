@@ -25,7 +25,7 @@ import SwiftUI
 public struct ChatStateButton: View {
     private let action: (()->Void)?
     private let view: ChatStateButtonViewWrapper
-    init(action: (()->Void)? = nil, state: Binding<ChatState>, text: Binding<String>) {
+    public init(action: (()->Void)? = nil, state: Binding<ChatState>, text: Binding<String>) {
         self.action = action
         self.view = ChatStateButtonViewWrapper(action: action, state: state, text: text)
     }
@@ -85,6 +85,9 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
             context.coordinator.animator.inactive()
         }
         context.coordinator.animator.showText(text)
+    }
+    public func set(state: ChatState) {
+        self.state = state
     }
 }
 

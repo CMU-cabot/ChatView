@@ -28,14 +28,11 @@ import Speech
 
 @objcMembers
 open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SFSpeechRecognizerDelegate {
-
+    
     fileprivate let speechRecognizer = SFSpeechRecognizer()!
     fileprivate var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     fileprivate var recognitionTask: SFSpeechRecognitionTask?
-
-    @IBOutlet weak var label: UILabel!
-    @IBOutlet weak var button: UIButton!
-
+    
     public var tts:TTSProtocol?
     public var delegate:ChatStateButtonViewAnimator?
     public var speaking:Bool = false
@@ -52,7 +49,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
 
     var pwCaptureSession:AVCaptureSession? = nil
     var audioDataQueue:DispatchQueue? = nil
-
+    
     var timeoutTimer:Timer? = nil
     var timeoutDuration:TimeInterval = 20.0
 
@@ -61,7 +58,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
 
     var unknownErrorCount = 0
     public var useRawError = false
-
+    
     override public init() {
         self.stopstt = {}
         self.audioDataQueue = DispatchQueue(label: "hulop.conversation", attributes: [])
@@ -114,7 +111,9 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         }
 
         if !pwCapturingStarted {
-            self.pwCaptureSession?.startRunning()
+            DispatchQueue.global().async {
+                self.pwCaptureSession?.startRunning()
+            }
         }
     }
 
@@ -125,6 +124,9 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
     fileprivate func stopPWCaptureSession(){
         pwCapturingIgnore = true
     }
+    
+    private var ave: Float = 0
+    private var aveCount: Int = 0
 
     open func captureOutput(_ captureOutput: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         // append buffer to recognition request
@@ -135,7 +137,11 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             NSLog("Recording started")
         }
         pwCapturingStarted = true
-
+        guard let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) else { return }
+        let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription)
+        guard let asbd = asbd?.pointee else { return }
+        let sampleRate = asbd.mSampleRate
+        let updateRate = 30.0
         // get raw data and calcurate the power
         var audioBufferList = AudioBufferList()
         var blockBuffer: CMBlockBuffer?
@@ -155,36 +161,26 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         let ptr = data.bindMemory(to: Int16.self, capacity: actualSampleCount)
         let buf = UnsafeBufferPointer(start: ptr, count: actualSampleCount)
         let array = Array(buf)
-
-        // check power in 256 sample window (62.5Hz @ 16000 sample per sec) and
-        // but buffer is bigger than this so set power level with delay
-        let setMaxPowerLambda:(Float, Double) -> Void = {power, delay in
-            DispatchQueue.main.asyncAfter(deadline: .now()+delay) {
-                self.delegate?.setMaxPower(power)
-            }
-        }
-
-        var count = 0
-        let windowSize = 256
-        var ave:Float = 0
         for a in array {
-            count += 1
-            if count % windowSize == 0 {
+            self.ave += abs(Float(a))
+            self.aveCount += 1
+            if Float64(self.aveCount) >= sampleRate / updateRate {
                 // max is 110db
-                let power = 110 + (log10((ave+1) / Float(windowSize)) - log10(32768))*20
-                setMaxPowerLambda(power, Double(count) / 16000.0)
+                let power = 110 + (log10((ave + 1) / Float(sampleRate / updateRate)) - log10(32768)) * 20
+                print("setMaxPowerLambda power=\(power), count=\(self.aveCount)")
+                self.delegate?.setMaxPower(power)
                 ave = 0
+                aveCount = 0
             }
-            ave += Float(abs(a))
         }
     }
 
     func startRecognize(_ actions: [([String],(String, UInt64)->Void)], failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
         self.paused = false
-
+        
         self.last_timeout = timeout
         self.last_failure = failure
-
+                        
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         recognitionRequest!.shouldReportPartialResults = true
         last_text = ""
@@ -230,40 +226,40 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
                     complete()
                 } else if code == 4 {
                     weakself.endRecognize(); // network error
-                    let newError = weakself.createError(NSLocalizedString("checkNetworkConnection", tableName: nil, bundle: Bundle.module, value: "", comment:""))
-                    failure(newError)
+                    //let newError = weakself.createError(NSLocalizedString("checkNetworkConnection", tableName: nil, bundle: Bundle.module, value: "", comment:""))
+                    //failure(newError)
                 } else {
                     weakself.endRecognize()
                     if weakself.useRawError {
                         failure(error) // unknown error
                     } else {
-                        let newError = weakself.createError(NSLocalizedString("unknownError\(weakself.unknownErrorCount)", tableName: nil, bundle: Bundle.module, value: "", comment:""))
-                        failure(newError)
+                        //let newError = weakself.createError(NSLocalizedString("unknownError\(weakself.unknownErrorCount)", tableName: nil, bundle: Bundle.module, value: "", comment:""))
+                        //failure(newError)
                         weakself.unknownErrorCount = (weakself.unknownErrorCount + 1) % 2
                     }
                 }
                 return;
             }
-
+            
             guard let recognitionTask = weakself.recognitionTask else {
                 return;
             }
-
+            
             guard recognitionTask.isCancelled == false else {
                 return;
             }
-
+            
             guard let result = result else {
                 return;
             }
             weakself.stoptimer();
-
+            
             weakself.last_text = result.bestTranscription.formattedString;
 
             weakself.resulttimer = Timer.scheduledTimer(withTimeInterval: weakself.resulttimerDuration, repeats: false, block: { (timer) in
                 weakself.endRecognize()
             })
-
+            
             let str = weakself.last_text
             let isFinal:Bool = result.isFinal;
             let length:Int = str.count
@@ -287,16 +283,16 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             }
             self.stopstt = {}
         }
-
+        
         self.timeoutTimer = Timer.scheduledTimer(withTimeInterval: self.timeoutDuration, repeats: false, block: { (timer) in
             self.endRecognize()
             timeout()
         })
-
+        
         self.restarting = false
         self.recognizing = true
     }
-
+    
     func stoptimer(){
         if self.resulttimer != nil{
             self.resulttimer?.invalidate()
@@ -307,9 +303,9 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             self.timeoutTimer = nil
         }
     }
-
+    
     public func listen(_ actions: [([String],(String, UInt64)->Void)], selfvoice: String?, speakendactions:[((String)->Void)]?,avrdelegate:AVAudioRecorderDelegate?, failure:@escaping (NSError)->Void, timeout:@escaping ()->Void) {
-
+        
         if (speaking) {
             NSLog("TTS is speaking so this listen is eliminated")
             return
@@ -346,14 +342,14 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         }
         self.speaking = true
     }
-
+    
     func now() -> Double {
         return Date().timeIntervalSince1970
     }
-
+    
     public func prepare() {
     }
-
+    
     public func disconnect() {
         self.tts?.stop()
         self.speaking = false
@@ -362,7 +358,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         self.stopstt()
         self.stoptimer()
     }
-
+    
     public func endRecognize() {
         tts?.stop()
         self.speaking = false
@@ -371,7 +367,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         self.stopstt()
         self.stoptimer()
     }
-
+    
     public func restartRecognize() {
         self.paused = false;
         self.restarting = true;
@@ -395,10 +391,10 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
                     return true
                 }
             } catch {
-
+                
             }
         }
-
+        
         return false
     }
 }

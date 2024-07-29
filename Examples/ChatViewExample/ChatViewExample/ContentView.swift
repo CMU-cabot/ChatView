@@ -21,10 +21,10 @@
  *******************************************************************************/
 
 import SwiftUI
+import ChatView
 
-public struct ChatViewTest: View {
+public struct ContentView: View {
     @StateObject var model: ChatViewModel
-    @StateObject var stt: STTModel
 
     public var body: some View {
         ChatView(messages: model.messages)
@@ -37,6 +37,9 @@ public struct ChatViewTest: View {
             Spacer()
         }
         .frame(height: 150)
+        .onAppear() {
+            print("onAppear")
+        }
     }
 }
 
@@ -47,8 +50,7 @@ public struct ChatViewTest: View {
         ChatMessage(user: .Agent, text: "Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2 Hello2"),
         ChatMessage(user: .User, text: "Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 ")
     ]
-    let stt = STTModel()
-    return ChatViewTest(model: model, stt: stt)
+    return ContentView(model: model)
 }
 
 #Preview("ChatView Dynamic") {
@@ -62,8 +64,7 @@ public struct ChatViewTest: View {
     DispatchQueue.main.asyncAfter(deadline: .now()+3) {
         model.messages.append(ChatMessage(user: .User, text: "Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 Hello3 "))
     }
-    let stt = STTModel()
-    return ChatViewTest(model: model, stt: stt)
+    return ContentView(model: model)
 }
 
 #Preview("ChatView Streaming") {
@@ -76,7 +77,7 @@ public struct ChatViewTest: View {
         if count < text.count {
             let index = text.index(text.startIndex, offsetBy: count)
             let character = text[index]
-            message.text += String(character)
+            message.append(text: String(character))
             count += 1
         } else {
             model.chatState = .Inactive
@@ -85,6 +86,5 @@ public struct ChatViewTest: View {
     }
     model.messages.append(message)
     model.chatState = .Speaking
-    let stt = STTModel()
-    return ChatViewTest(model: model, stt: stt)
+    return ContentView(model: model)
 }

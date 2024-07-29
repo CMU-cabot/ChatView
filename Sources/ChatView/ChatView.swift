@@ -27,7 +27,7 @@ import SwiftUI
 public struct ChatView: View {
     var messages: [ChatMessage]
 
-    init(messages: [ChatMessage]) {
+    public init(messages: [ChatMessage]) {
         self.messages = messages
     }
 

@@ -21,10 +21,14 @@
  *******************************************************************************/
 
 import Foundation
-import Speech
+import ChatView
 
-public class STTModel: ObservableObject {
-    //private let speechRecognizer = SFSpeechRecognizer()
-    //private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    //private var recognitionTask: SFSpeechRecognitionTask?
+public class ChatViewModel: ObservableObject {
+    @Published public var messages: [ChatMessage] = []
+    @Published var chatState: ChatState = .Inactive
+    @Published var chatText: String = ""
+    var stt = STTHelper()
+
+    public init() {
+    }
 }
