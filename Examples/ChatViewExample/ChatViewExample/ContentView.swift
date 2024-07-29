@@ -36,7 +36,7 @@ public struct ContentView: View {
             .frame(width: 150)
             Spacer()
         }
-        .frame(height: 150)
+        .frame(height: 200)
         .onAppear() {
             print("onAppear")
         }

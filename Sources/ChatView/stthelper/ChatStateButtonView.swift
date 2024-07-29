@@ -493,22 +493,26 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
         indicatorLeft?.opacity = 0
         indicatorRight?.opacity = 0
         micback?.size = IconSize
-        micback?.opacity = 1
+        micback?.opacity = 0
 
         if let micback {
             let a2 = AnimLayer.pulse(Double(bDuration), size: IconSize, scale: CGFloat(bScale))
             a2.repeatCount = 10000000
-            micback.add(a2, forKey: "listen-breathing")
+            //micback.add(a2, forKey: "listen-breathing")
         }
-        timer = Timer.scheduledTimer(timeInterval: Double(Frequency), target: self, selector: #selector(listening(_:)), userInfo: nil, repeats: true)
+        DispatchQueue.main.async {
+            self.timer = Timer.scheduledTimer(timeInterval: Double(self.Frequency), target: self, selector: #selector(self.listening(_:)), userInfo: nil, repeats: true)
+        }
     }
         
     @objc fileprivate func listening(_ timer:Timer) {
         var p:Float = power - threthold
         p = p / (MaxDB-threthold)
         p = max(p, 0)
-
+        
         indicatorCenter?.size = min(CGFloat(p * (maxScaleOfVolumeIndicator - 1.0) + 1.0) * IconSize, IconCircleSize)
+        indicatorCenter?.bounds = CGRect(x:0, y:0, width: IconBackgroundSize, height: IconBackgroundSize)
+
         self.indicatorCenter?.setNeedsDisplay()
     }
 
@@ -650,38 +654,8 @@ public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
             self.label?.text = text
             return
         }
-
-        DispatchQueue.main.async {
-            if let clr = color{
-                self.label?.textColor = clr
-            }
-            if let label = self.label,
-               let currentText = label.text {
-                if currentText.count < len ||
-                    label.text?.prefix(len-1).description != text {
-                    self.textTimer?.invalidate()
-                    self.textPos = (label.text?.count) ?? 0
-                    self.textTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(ChatStateButtonViewAnimator.showText2(_:)), userInfo: nil, repeats: true)
-                }
-            } else {
-                self.label?.text = text
-            }
-            self.text = text
-        }
-
-    }
-
-    func showText2(_ timer:Timer) {
-        self.textPos += 1
-        var part = self.text
-        if (self.textPos < (self.text?.count)!) {
-            part = self.text?.prefix(self.textPos-1).description
-        } else {
-            timer.invalidate()
-        }
-        DispatchQueue.main.async {
-            self.label?.text = part
-        }
+        
+        self.label?.text = text
     }
 
     // MARK: - Utility Function

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2024  Carnegie Mellon University
+ * Copyright (c) 2014, 2016  IBM Corporation, Carnegie Mellon University and others
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,57 +19,50 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *******************************************************************************/
-
-import Foundation
+ 
 import UIKit
 import ChatView
+import AVFoundation
 
-public class ChatViewModel: ObservableObject  {
-    @Published public var messages: [ChatMessage] = []
-    @Published var power: Float = 0
-    @Published var chatState: ChatState = .Inactive
-    @Published var chatText: String = ""
-    var stt = STTHelper()
-    var client = ChatClientMock()
+class SimpleTTS: NSObject, TTSProtocol, AVSpeechSynthesizerDelegate {
+    static let shared = SimpleTTS()
 
-    public init() {
-        stt.delegate = self
-        stt.tts = SimpleTTS.shared
-        client.delegate = self
-    }
-}
+    var map: [String: ()->Void] = [:]
+    let synthe = AVSpeechSynthesizer()
 
-extension ChatViewModel: ChatClientDelegate {
-    public func receive(identifier: String, text: String) {
-        messages.append(ChatMessage(user: .Agent, text: text))
-    }
-}
+    func speak(_ text:String?, callback: @escaping ()->Void) {
+        guard let text = text else {
+            return callback()
+        }
 
-extension ChatViewModel: STTHelperDelegate {
-    public func setPower(_ power: Float) {
-        DispatchQueue.main.async {
-            self.power = power
-        }
+        synthe.delegate = self
+        let u = AVSpeechUtterance(string: text)
+        map[text] = callback
+        NSLog("speech started: "+text)
+        synthe.speak(u)
     }
-    public func showText(_ text: String, color: UIColor?) {
-        print(text)
-        DispatchQueue.main.async {
-            self.chatText = text
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        NSLog("speech finished: "+utterance.speechString)
+        if let callback = map[utterance.speechString] {
+            callback()
         }
+        synthe.stopSpeaking(at: .immediate)
     }
-    public func listen() {
-        DispatchQueue.main.async {
-            self.chatState = .Listening
-        }
+    
+    func stop() {
+        synthe.stopSpeaking(at: .word)
     }
-    public func speak() {
-        DispatchQueue.main.async {
-            self.chatState = .Speaking
-        }
+
+    func stop(_ immediate: Bool) {
+        synthe.stopSpeaking(at: .immediate)
     }
-    public func recognize() {
-        DispatchQueue.main.async {
-            self.chatState = .Recognized
-        }
+    
+    func vibrate() {
+        
+    }
+    
+    func playVoiceRecoStart() {
+        
     }
 }

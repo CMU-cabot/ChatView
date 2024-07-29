@@ -94,9 +94,6 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
         context.coordinator.animator.showText(text)
         context.coordinator.animator.setMaxPower(power)
     }
-    public func set(state: ChatState) {
-        self.state = state
-    }
 }
 
 #Preview("listen") {
