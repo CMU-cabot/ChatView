@@ -37,37 +37,14 @@ public protocol STTHelperDelegate {
 
 @objcMembers
 open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SFSpeechRecognizerDelegate {
-    
-    fileprivate let speechRecognizer = SFSpeechRecognizer()!
-    fileprivate var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    fileprivate var recognitionTask: SFSpeechRecognitionTask?
-    
-    public var tts:TTSProtocol?
-    public var delegate:STTHelperDelegate?
-    public var speaking:Bool = false
-    public var recognizing:Bool = false
-    public var paused:Bool = true
-    public var restarting:Bool = true
-    var last_action: ((String, UInt64)->Void)?
-    var last_failure:(NSError)->Void = {arg in}
-    var last_timeout:()->Void = { () in}
-    var last_text: String = ""
-
-    var stopstt:()->()
-    let waitDelay = 0.0
-
-    var pwCaptureSession:AVCaptureSession? = nil
-    var audioDataQueue:DispatchQueue? = nil
-    
-    var timeoutTimer:Timer? = nil
-    var timeoutDuration:TimeInterval = 20.0
-
-    var resulttimer:Timer? = nil
-    var resulttimerDuration:TimeInterval = 1.0
-
-    var unknownErrorCount = 0
+    public var tts: TTSProtocol?
+    public var delegate: STTHelperDelegate?
+    public var speaking: Bool = false
+    public var recognizing: Bool = false
+    public var paused: Bool = true
+    public var restarting: Bool = true
     public var useRawError = false
-    
+
     override public init() {
         self.stopstt = {}
         self.audioDataQueue = DispatchQueue(label: "hulop.conversation", attributes: [])
@@ -90,16 +67,120 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         self.initPWCaptureSession()
     }
 
-    func createError(_ message:String) -> NSError{
+    public func listen(
+        selfvoice: String?,
+        speakendaction: ((String)->Void)?,
+        action: @escaping (String, UInt64)->Void,
+        failure: @escaping (NSError)->Void,
+        timeout: @escaping ()->Void
+    ) {
+        if (speaking) {
+            NSLog("TTS is speaking so this listen is eliminated")
+            return
+        }
+        NSLog("Listen \"\(selfvoice ?? "")\" \(action)")
+        self.last_action = action
+
+        self.stoptimer()
+        delegate?.speak()
+        delegate?.showText(" ", color: nil)
+
+        self.tts?.speak(selfvoice) {
+            if (!self.speaking) {
+                return
+            }
+            self.speaking = false
+            if let selfvoice,
+               let speakendaction {
+                speakendaction(selfvoice)
+            }
+
+            self.tts?.vibrate()
+            self.tts?.playVoiceRecoStart()
+
+            DispatchQueue.main.asyncAfter(deadline: .now()+self.waitDelay) {
+                self.startPWCaptureSession()//alternative
+                self.startRecognize(action, failure: failure, timeout: timeout)
+
+                self.delegate?.showText(NSLocalizedString("SPEAK_NOW", tableName: nil, bundle: Bundle.module, value: "", comment:"Speak Now!"),color: UIColor.black)
+                self.delegate?.listen()
+            }
+
+        }
+        self.speaking = true
+    }
+
+    public func disconnect() {
+        self.tts?.stop()
+        self.delegate?.inactive()
+        self.speaking = false
+        self.recognizing = false
+        self.pwCaptureSession?.stopRunning()
+        self.stopstt()
+        self.stoptimer()
+    }
+
+    public func endRecognize() {
+        tts?.stop()
+        self.delegate?.showText(" ", color: nil)
+        self.delegate?.inactive()
+        self.speaking = false
+        self.recognizing = false
+        self.stopPWCaptureSession()
+        self.stopstt()
+        self.stoptimer()
+    }
+
+    public func restartRecognize() {
+        self.paused = false;
+        self.restarting = true;
+        if let actions = self.last_action {
+            self.tts?.vibrate()
+            self.tts?.playVoiceRecoStart()
+
+            DispatchQueue.main.asyncAfter(deadline: .now()+self.waitDelay) {
+                self.startPWCaptureSession()
+                self.startRecognize(actions, failure:self.last_failure, timeout:self.last_timeout)
+                self.delegate?.showText(NSLocalizedString("SPEAK_NOW", tableName: nil, bundle: Bundle.module, value: "", comment:"Speak Now!"),color: UIColor.black)
+                self.delegate?.listen()
+            }
+        }
+    }
+
+    // MARK: - private func
+    private let speechRecognizer = SFSpeechRecognizer()!
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recognitionTask: SFSpeechRecognitionTask?
+
+    private var last_action: ((String, UInt64)->Void)?
+    private var last_failure:(NSError)->Void = {arg in}
+    private var last_timeout:()->Void = { () in}
+    private var last_text: String = ""
+
+    private var stopstt:()->()
+    private let waitDelay = 0.0
+
+    private var pwCaptureSession:AVCaptureSession? = nil
+    private var audioDataQueue:DispatchQueue? = nil
+
+    private var timeoutTimer:Timer? = nil
+    private var timeoutDuration:TimeInterval = 20.0
+
+    private var resulttimer:Timer? = nil
+    private var resulttimerDuration:TimeInterval = 1.0
+
+    private var unknownErrorCount = 0
+
+    private func createError(_ message:String) -> NSError{
         let domain = "swift.sttHelper"
         let code = -1
         let userInfo = [NSLocalizedDescriptionKey:message]
         return NSError(domain:domain, code: code, userInfo:userInfo)
     }
 
-    var pwCapturingStarted: Bool = false
-    var pwCapturingIgnore: Bool = false
-    fileprivate func initPWCaptureSession(){//alternative
+    private var pwCapturingStarted: Bool = false
+    private var pwCapturingIgnore: Bool = false
+    private func initPWCaptureSession(){//alternative
         if nil == self.pwCaptureSession{
             self.pwCaptureSession = AVCaptureSession()
             if let captureSession = self.pwCaptureSession{
@@ -126,11 +207,11 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         }
     }
 
-    fileprivate func startPWCaptureSession(){//alternative
+    private func startPWCaptureSession(){//alternative
         pwCapturingIgnore = false
     }
 
-    fileprivate func stopPWCaptureSession(){
+    private func stopPWCaptureSession(){
         pwCapturingIgnore = true
     }
     
@@ -183,7 +264,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         }
     }
 
-    func startRecognize(_ action: @escaping (String, UInt64)->Void, failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
+    private func startRecognize(_ action: @escaping (String, UInt64)->Void, failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
         self.paused = false
         
         self.last_timeout = timeout
@@ -290,7 +371,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         self.recognizing = true
     }
     
-    func stoptimer(){
+    private func stoptimer(){
         if self.resulttimer != nil{
             self.resulttimer?.invalidate()
             self.resulttimer = nil
@@ -298,93 +379,6 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         if self.timeoutTimer != nil {
             self.timeoutTimer?.invalidate()
             self.timeoutTimer = nil
-        }
-    }
-    
-    public func listen(
-        selfvoice: String?,
-        speakendaction: ((String)->Void)?,
-        action: @escaping (String, UInt64)->Void,
-        failure: @escaping (NSError)->Void,
-        timeout: @escaping ()->Void
-    ) {
-        if (speaking) {
-            NSLog("TTS is speaking so this listen is eliminated")
-            return
-        }
-        NSLog("Listen \"\(selfvoice ?? "")\" \(action)")
-        self.last_action = action
-
-        self.stoptimer()
-        delegate?.speak()
-        delegate?.showText(" ", color: nil)
-
-        self.tts?.speak(selfvoice) {
-            if (!self.speaking) {
-                return
-            }
-            self.speaking = false
-            if let selfvoice,
-               let speakendaction {
-                speakendaction(selfvoice)
-            }
-
-            self.tts?.vibrate()
-            self.tts?.playVoiceRecoStart()
-
-            DispatchQueue.main.asyncAfter(deadline: .now()+self.waitDelay) {
-                self.startPWCaptureSession()//alternative
-                self.startRecognize(action, failure: failure, timeout: timeout)
-
-                self.delegate?.showText(NSLocalizedString("SPEAK_NOW", tableName: nil, bundle: Bundle.module, value: "", comment:"Speak Now!"),color: UIColor.black)
-                self.delegate?.listen()
-            }
-
-        }
-        self.speaking = true
-    }
-    
-    func now() -> Double {
-        return Date().timeIntervalSince1970
-    }
-    
-    public func prepare() {
-    }
-    
-    public func disconnect() {
-        self.tts?.stop()
-        self.delegate?.inactive()
-        self.speaking = false
-        self.recognizing = false
-        self.pwCaptureSession?.stopRunning()
-        self.stopstt()
-        self.stoptimer()
-    }
-    
-    public func endRecognize() {
-        tts?.stop()
-        self.delegate?.showText(" ", color: nil)
-        self.delegate?.inactive()
-        self.speaking = false
-        self.recognizing = false
-        self.stopPWCaptureSession()
-        self.stopstt()
-        self.stoptimer()
-    }
-    
-    public func restartRecognize() {
-        self.paused = false;
-        self.restarting = true;
-        if let actions = self.last_action {
-            self.tts?.vibrate()
-            self.tts?.playVoiceRecoStart()
-
-            DispatchQueue.main.asyncAfter(deadline: .now()+self.waitDelay) {
-                self.startPWCaptureSession()
-                self.startRecognize(actions, failure:self.last_failure, timeout:self.last_timeout)
-                self.delegate?.showText(NSLocalizedString("SPEAK_NOW", tableName: nil, bundle: Bundle.module, value: "", comment:"Speak Now!"),color: UIColor.black)
-                self.delegate?.listen()
-            }
         }
     }
 }
