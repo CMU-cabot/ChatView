@@ -39,17 +39,33 @@ public class ChatViewModel: ObservableObject  {
         client.delegate = self
     }
     public func startChat() {
-        print("startChat")
         client.send(message: "")
     }
+    public func pushed() {
+        if self.stt.recognizing {
+            self.stt.endRecognize()
+        }
+        else {
+            self.stt.restartRecognize()
+        }
+    }
     private func process(text: String, for user: ChatUser) {
-        print("process \(text) \(user)")
         messages.append(ChatMessage(user: user, text: text))
         switch user {
         case .Agent:
-            self.stt.listen({ text, code in
-                self.process(text: text, for: .User)
-            }, selfvoice: text, speakendactions: nil, avrdelegate: nil, failure: { error in }, timeout: { })
+            self.stt.listen(
+                selfvoice: text,
+                speakendaction: nil,
+                action: { text, code in
+                    self.process(text: text, for: .User)
+                },
+                failure: { error in
+                    print(error)
+                },
+                timeout: {
+                    print("timeout")
+                }
+            )
         case .User:
             client.send(message: text)
         }
@@ -69,9 +85,13 @@ extension ChatViewModel: STTHelperDelegate {
         }
     }
     public func showText(_ text: String, color: UIColor?) {
-        print(text)
         DispatchQueue.main.async {
             self.chatText = text
+        }
+    }
+    public func inactive() {
+        DispatchQueue.main.async {
+            self.chatState = .Inactive
         }
     }
     public func listen() {

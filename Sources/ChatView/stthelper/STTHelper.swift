@@ -29,6 +29,7 @@ import SwiftUI
 public protocol STTHelperDelegate {
     func setPower(_ power: Float)
     func showText(_ text: String, color: UIColor?)
+    func inactive()
     func listen()
     func speak()
     func recognize()
@@ -175,7 +176,6 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             if Float64(self.aveCount) >= sampleRate / updateRate {
                 // max is 110db
                 let power = 110 + (log10((ave + 1) / Float(sampleRate / updateRate)) - log10(32768)) * 20
-                //print("setMaxPowerLambda power=\(power), count=\(self.aveCount)")
                 self.delegate?.setPower(power)
                 ave = 0
                 aveCount = 0
@@ -183,7 +183,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         }
     }
 
-    public func startRecognize(_ action: @escaping (String, UInt64)->Void, failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
+    func startRecognize(_ action: @escaping (String, UInt64)->Void, failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
         self.paused = false
         
         self.last_timeout = timeout
@@ -205,7 +205,6 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             if e != nil {
                 weakself.stoptimer()
                 guard let error:NSError = e as NSError? else {
-                    print(e!)
                     weakself.endRecognize()
                     timeout()
                     return;
@@ -302,8 +301,13 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
         }
     }
     
-    public func listen(_ action: @escaping (String, UInt64)->Void ,selfvoice: String?, speakendactions:[((String)->Void)]?,avrdelegate:AVAudioRecorderDelegate?, failure:@escaping (NSError)->Void, timeout:@escaping ()->Void) {
-        
+    public func listen(
+        selfvoice: String?,
+        speakendaction: ((String)->Void)?,
+        action: @escaping (String, UInt64)->Void,
+        failure: @escaping (NSError)->Void,
+        timeout: @escaping ()->Void
+    ) {
         if (speaking) {
             NSLog("TTS is speaking so this listen is eliminated")
             return
@@ -320,10 +324,9 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
                 return
             }
             self.speaking = false
-            if speakendactions != nil {
-                for act in speakendactions!{
-                    (act)(selfvoice!)
-                }
+            if let selfvoice,
+               let speakendaction {
+                speakendaction(selfvoice)
             }
 
             self.tts?.vibrate()
@@ -350,6 +353,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
     
     public func disconnect() {
         self.tts?.stop()
+        self.delegate?.inactive()
         self.speaking = false
         self.recognizing = false
         self.pwCaptureSession?.stopRunning()
@@ -359,6 +363,8 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
     
     public func endRecognize() {
         tts?.stop()
+        self.delegate?.showText(" ", color: nil)
+        self.delegate?.inactive()
         self.speaking = false
         self.recognizing = false
         self.stopPWCaptureSession()
@@ -376,6 +382,8 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             DispatchQueue.main.asyncAfter(deadline: .now()+self.waitDelay) {
                 self.startPWCaptureSession()
                 self.startRecognize(actions, failure:self.last_failure, timeout:self.last_timeout)
+                self.delegate?.showText(NSLocalizedString("SPEAK_NOW", tableName: nil, bundle: Bundle.module, value: "", comment:"Speak Now!"),color: UIColor.black)
+                self.delegate?.listen()
             }
         }
     }

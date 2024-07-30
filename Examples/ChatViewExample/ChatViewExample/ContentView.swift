@@ -31,15 +31,12 @@ public struct ContentView: View {
         HStack {
             Spacer()
             ChatStateButton(action: {
-                print("ChatStateButton tapped")
+                model.pushed()
             }, state: $model.chatState, text: $model.chatText, power: $model.power)
             .frame(width: 150)
             Spacer()
         }
         .frame(height: 200)
-        .onAppear() {
-            print("onAppear")
-        }
     }
 }
 
