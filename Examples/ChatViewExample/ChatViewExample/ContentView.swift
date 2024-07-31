@@ -53,7 +53,7 @@ public struct ContentView: View {
                         print("speakend \(text)")
                     },
                     action: { text, code in
-                        self.model.messages.append(ChatMessage(user: .Agent, text: text))
+                        self.model.messages.append(ChatMessage(user: .User, text: text))
                         self.model.chat?.send(message: text)
                     },
                     failure: { error in
