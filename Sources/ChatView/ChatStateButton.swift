@@ -22,17 +22,26 @@
 
 import SwiftUI
 
+public struct ChatStateButtonModel {
+    public var power: Float
+    public var chatState: ChatState
+    public var chatText: String
+    public init(power: Float = 0, chatState: ChatState = .Inactive, chatText: String = "") {
+        self.power = power
+        self.chatState = chatState
+        self.chatText = chatText
+    }
+}
+
 public struct ChatStateButton: View {
     private let action: (()->Void)?
     private let view: ChatStateButtonViewWrapper
     public init(
         action: (()->Void)? = nil,
-        state: Binding<ChatState>,
-        text: Binding<String>,
-        power: Binding<Float>
+        state: Binding<ChatStateButtonModel>
     ) {
         self.action = action
-        self.view = ChatStateButtonViewWrapper(action: action, state: state, text: text, power: power)
+        self.view = ChatStateButtonViewWrapper(action: action, state: state)
     }
 
     public var body: some View {
@@ -63,22 +72,18 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
         return coordinator
     }
 
-    @Binding var state: ChatState
-    @Binding var text: String
-    @Binding var power: Float
+    @Binding var state: ChatStateButtonModel
     private var action: (()->Void)?
-    init(action: (()->Void)? = nil, state: Binding<ChatState>, text: Binding<String>, power: Binding<Float>) {
+    init(action: (()->Void)? = nil, state: Binding<ChatStateButtonModel>) {
         self.action = action
         self._state = state
-        self._text = text
-        self._power = power
     }
     func makeUIView(context: Context) -> UIView {
         print("makeUIView")
         return context.coordinator.view
     }
     func updateUIView(_ uiView: UIView, context: Context) {
-        switch self.state {
+        switch self.state.chatState {
         case .Inactive:
             context.coordinator.animator.inactive()
         case .Speaking:
@@ -90,52 +95,44 @@ struct ChatStateButtonViewWrapper: UIViewRepresentable {
         case .Unknown:
             context.coordinator.animator.inactive()
         }
-        context.coordinator.animator.showText(text)
-        context.coordinator.animator.setMaxPower(power)
+        context.coordinator.animator.showText(self.state.chatText)
+        context.coordinator.animator.setMaxPower(self.state.power)
     }
 }
 
 #Preview("listen") {
-    @State var state = ChatState.Inactive
-    @State var text = ""
-    @State var power: Float = 0
-    let view = ChatStateButton(state: $state, text: $text, power: $power)
+    @State var state = ChatStateButtonModel(chatState: .Inactive)
+    let view = ChatStateButton(state: $state)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        state = .Listening
+        state.chatState = .Listening
     }
     return view
 
 }
 
 #Preview("recognize") {
-    @State var state = ChatState.Inactive
-    @State var text = ""
-    @State var power: Float = 0
-    let view = ChatStateButton(state: $state, text: $text, power: $power)
+    @State var state = ChatStateButtonModel(chatState: .Inactive)
+    let view = ChatStateButton(state: $state)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        state = .Recognized
+        state.chatState = .Recognized
     }
     return view
 }
 
 #Preview("speak") {
-    @State var state = ChatState.Inactive
-    @State var text = ""
-    @State var power: Float = 0
-    let view = ChatStateButton(state: $state, text: $text, power: $power)
+    @State var state = ChatStateButtonModel(chatState: .Inactive)
+    let view = ChatStateButton(state: $state)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        state = .Speaking
+        state.chatState = .Speaking
     }
     return view
 }
 
 #Preview("inactive") {
-    @State var state = ChatState.Inactive
-    @State var text = ""
-    @State var power: Float = 0
-    let view = ChatStateButton(state: $state, text: $text, power: $power)
+    @State var state = ChatStateButtonModel(chatState: .Inactive)
+    let view = ChatStateButton(state: $state)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        state = .Inactive
+        state.chatState = .Inactive
     }
     return view
 }

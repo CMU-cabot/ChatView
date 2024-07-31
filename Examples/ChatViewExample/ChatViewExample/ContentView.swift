@@ -31,12 +31,41 @@ public struct ContentView: View {
         HStack {
             Spacer()
             ChatStateButton(action: {
-                model.pushed()
-            }, state: $model.chatState, text: $model.chatText, power: $model.power)
+                if model.stt?.recognizing == true {
+                    model.stt?.endRecognize()
+                }
+                else {
+                    model.stt?.restartRecognize()
+                }
+            }, state: $model.chatState)
             .frame(width: 150)
             Spacer()
         }
         .frame(height: 200)
+        .onAppear() {
+            model.stt = AppleSTT(state: $model.chatState, tts: SimpleTTS.shared)
+
+            model.chat = ChatClientMock() { identifier, text in
+                model.messages.append(ChatMessage(user: .Agent, text: text))
+                model.stt?.listen(
+                    selfvoice: text,
+                    speakendaction: { text in
+                        print("speakend \(text)")
+                    },
+                    action: { text, code in
+                        self.model.messages.append(ChatMessage(user: .Agent, text: text))
+                        self.model.chat?.send(message: text)
+                    },
+                    failure: { error in
+                        print(error)
+                    },
+                    timeout: {
+                        print("timeout")
+                    }
+                )
+            }
+            model.chat?.send(message: "")
+        }
     }
 }
 
@@ -77,11 +106,11 @@ public struct ContentView: View {
             message.append(text: String(character))
             count += 1
         } else {
-            model.chatState = .Inactive
+            model.chatState.chatState = .Inactive
             timer.invalidate()
         }
     }
     model.messages.append(message)
-    model.chatState = .Speaking
+    model.chatState.chatState = .Speaking
     return ContentView(model: model)
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2024  Carnegie Mellon University
+ * Copyright (c) 2014, 2024  IBM Corporation, Carnegie Mellon University and others
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,18 @@
  *******************************************************************************/
 
 import Foundation
+import SwiftUI
 
-public typealias ChatClientCallback = ((String, String) -> Void)
-
-public protocol ChatClient {
-    var callback: ChatClientCallback? { get set }
-    func send(message: String)
+public protocol STTProtocol {
+    var state: Binding<ChatStateButtonModel>? { get set }
+    func listen(
+        selfvoice: String?,
+        speakendaction: ((String)->Void)?,
+        action: @escaping (String, UInt64)->Void,
+        failure: @escaping (NSError)->Void,
+        timeout: @escaping ()->Void
+    )
+    func disconnect()
+    func endRecognize()
+    func restartRecognize()
 }

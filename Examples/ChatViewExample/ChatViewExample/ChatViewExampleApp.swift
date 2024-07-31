@@ -29,9 +29,6 @@ struct ChatViewExampleApp: App {
         WindowGroup {
             let model = ChatViewModel()
             ContentView(model: model)
-                .onAppear() {
-                    model.startChat()
-                }
         }
     }
 }

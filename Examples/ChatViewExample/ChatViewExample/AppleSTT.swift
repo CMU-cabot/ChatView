@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2016  IBM Corporation, Carnegie Mellon University and others
+ * Copyright (c) 2014, 2024  IBM Corporation, Carnegie Mellon University and others
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,32 +20,26 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
+import ChatView
 import Foundation
 import UIKit
 import AVFoundation
 import Speech
 import SwiftUI
 
-public protocol STTHelperDelegate {
-    func setPower(_ power: Float)
-    func showText(_ text: String, color: UIColor?)
-    func inactive()
-    func listen()
-    func speak()
-    func recognize()
-}
-
 @objcMembers
-open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SFSpeechRecognizerDelegate {
+open class AppleSTT: NSObject, STTProtocol, AVCaptureAudioDataOutputSampleBufferDelegate, SFSpeechRecognizerDelegate {
     public var tts: TTSProtocol?
-    public var delegate: STTHelperDelegate?
     public var speaking: Bool = false
     public var recognizing: Bool = false
     public var paused: Bool = true
     public var restarting: Bool = true
     public var useRawError = false
+    public var state: Binding<ChatStateButtonModel>? = nil
 
-    override public init() {
+    public init(state: Binding<ChatStateButtonModel>, tts: TTSProtocol? = nil) {
+        self.state = state
+        self.tts = tts
         self.stopstt = {}
         self.audioDataQueue = DispatchQueue(label: "hulop.conversation", attributes: [])
         super.init()
@@ -64,7 +58,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             NSLog("Audio session error")
         }
 
-        self.initPWCaptureSession()
+        //self.initPWCaptureSession()
     }
 
     public func listen(
@@ -78,12 +72,14 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             NSLog("TTS is speaking so this listen is eliminated")
             return
         }
-        NSLog("Listen \"\(selfvoice ?? "")\" \(action)")
+        // NSLog("Listen \"\(selfvoice ?? "")\" \(action)")
         self.last_action = action
 
         self.stoptimer()
-        delegate?.speak()
-        delegate?.showText(" ", color: nil)
+        DispatchQueue.main.async {
+            self.state?.wrappedValue.chatState = .Speaking
+            self.state?.wrappedValue.chatText = " "
+        }
 
         self.tts?.speak(selfvoice) {
             if (!self.speaking) {
@@ -99,11 +95,12 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             self.tts?.playVoiceRecoStart()
 
             DispatchQueue.main.asyncAfter(deadline: .now()+self.waitDelay) {
+                self.initPWCaptureSession()
                 self.startPWCaptureSession()//alternative
                 self.startRecognize(action, failure: failure, timeout: timeout)
 
-                self.delegate?.showText(NSLocalizedString("SPEAK_NOW", tableName: nil, bundle: Bundle.module, value: "", comment:"Speak Now!"),color: UIColor.black)
-                self.delegate?.listen()
+                self.state?.wrappedValue.chatText = "SPEAK_NOW"
+                self.state?.wrappedValue.chatState = .Listening
             }
 
         }
@@ -112,7 +109,9 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
 
     public func disconnect() {
         self.tts?.stop()
-        self.delegate?.inactive()
+        DispatchQueue.main.async {
+            self.state?.wrappedValue.chatState = .Inactive
+        }
         self.speaking = false
         self.recognizing = false
         self.pwCaptureSession?.stopRunning()
@@ -122,8 +121,10 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
 
     public func endRecognize() {
         tts?.stop()
-        self.delegate?.showText(" ", color: nil)
-        self.delegate?.inactive()
+        DispatchQueue.main.async {
+            self.state?.wrappedValue.chatText = " "
+            self.state?.wrappedValue.chatState = .Inactive
+        }
         self.speaking = false
         self.recognizing = false
         self.stopPWCaptureSession()
@@ -141,8 +142,8 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             DispatchQueue.main.asyncAfter(deadline: .now()+self.waitDelay) {
                 self.startPWCaptureSession()
                 self.startRecognize(actions, failure:self.last_failure, timeout:self.last_timeout)
-                self.delegate?.showText(NSLocalizedString("SPEAK_NOW", tableName: nil, bundle: Bundle.module, value: "", comment:"Speak Now!"),color: UIColor.black)
-                self.delegate?.listen()
+                self.state?.wrappedValue.chatText = "SPEAK_NOW"
+                self.state?.wrappedValue.chatState = .Listening
             }
         }
     }
@@ -214,7 +215,7 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
     private func stopPWCaptureSession(){
         pwCapturingIgnore = true
     }
-    
+
     private var ave: Float = 0
     private var aveCount: Int = 0
 
@@ -257,7 +258,9 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             if Float64(self.aveCount) >= sampleRate / updateRate {
                 // max is 110db
                 let power = 110 + (log10((ave + 1) / Float(sampleRate / updateRate)) - log10(32768)) * 20
-                self.delegate?.setPower(power)
+                DispatchQueue.main.async {
+                    self.state?.wrappedValue.power = power
+                }
                 ave = 0
                 aveCount = 0
             }
@@ -266,10 +269,10 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
 
     private func startRecognize(_ action: @escaping (String, UInt64)->Void, failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
         self.paused = false
-        
+
         self.last_timeout = timeout
         self.last_failure = failure
-                        
+
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         recognitionRequest!.shouldReportPartialResults = true
         last_text = ""
@@ -294,7 +297,9 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
                 let code = error.code
                 if code == 203 { // Empty recognition
                     weakself.endRecognize();
-                    weakself.delegate?.recognize()
+                    DispatchQueue.main.async {
+                        weakself.state?.wrappedValue.chatState = .Recognized
+                    }
                     timeout()
                 } else if code == 209 || code == 216 || code == 1700 || code == 301 {
                     // noop
@@ -318,38 +323,42 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
                 }
                 return;
             }
-            
+
             guard let recognitionTask = weakself.recognitionTask else {
                 return;
             }
-            
+
             guard recognitionTask.isCancelled == false else {
                 return;
             }
-            
+
             guard let result = result else {
                 return;
             }
             weakself.stoptimer();
-            
+
             weakself.last_text = result.bestTranscription.formattedString;
 
             weakself.resulttimer = Timer.scheduledTimer(withTimeInterval: weakself.resulttimerDuration, repeats: false, block: { (timer) in
                 weakself.endRecognize()
             })
-            
+
             let str = weakself.last_text
             let isFinal:Bool = result.isFinal;
             let length:Int = str.count
             NSLog("Result = \(str), Length = \(length), isFinal = \(isFinal)");
             if (str.count > 0) {
-                weakself.delegate?.showText(str, color: nil);
+                DispatchQueue.main.async {
+                    weakself.state?.wrappedValue.chatText = str
+                }
                 if isFinal{
                     complete()
                 }
             }else{
                 if isFinal{
-                    weakself.delegate?.showText("?", color: nil)
+                    DispatchQueue.main.async {
+                        weakself.state?.wrappedValue.chatText = "?"
+                    }
                 }
             }
         })
@@ -361,16 +370,16 @@ open class STTHelper: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, SF
             }
             self.stopstt = {}
         }
-        
+
         self.timeoutTimer = Timer.scheduledTimer(withTimeInterval: self.timeoutDuration, repeats: false, block: { (timer) in
             self.endRecognize()
             timeout()
         })
-        
+
         self.restarting = false
         self.recognizing = true
     }
-    
+
     private func stoptimer(){
         if self.resulttimer != nil{
             self.resulttimer?.invalidate()

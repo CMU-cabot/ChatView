@@ -23,20 +23,22 @@
 import Foundation
 import ChatView
 
+
 class ChatClientMock: ChatClient {
-    var delegate: ChatClientDelegate?
+    var callback: ChatClientCallback?
     let welcome_text = "Hello"
+    init(callback: @escaping ChatClientCallback) {
+        self.callback = callback
+    }
     func send(message: String) {
         if message.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                guard let delegate = self.delegate else { return }
-                delegate.receive(identifier: UUID().uuidString, text: self.welcome_text)
+                self.callback?(UUID().uuidString, self.welcome_text)
             }
             return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            guard let delegate = self.delegate else { return }
-            delegate.receive(identifier: UUID().uuidString, text: message)
+            self.callback?(UUID().uuidString, message)
         }
     }
 }

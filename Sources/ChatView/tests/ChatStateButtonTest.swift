@@ -23,43 +23,41 @@
 import SwiftUI
 
 public struct ChatStateButtonTest: View {
-    @State var state: ChatState = .Inactive
-    @State var text: String = ""
-    @State var power: Float = 0
+    @State var state = ChatStateButtonModel(chatState: .Inactive)
     public var body: some View {
-        ChatStateButton(state: $state, text: $text, power: $power)
+        ChatStateButton(state: $state)
         Button(action: {
-            state = .Listening
+            state.chatState = .Listening
         }, label: {
             Text("listen")
         })
         .font(.title)
         Button(action: {
-            state = .Speaking
+            state.chatState = .Speaking
         }, label: {
             Text("speak")
         })
         .font(.title)
         Button(action: {
-            state = .Recognized
+            state.chatState = .Recognized
         }, label: {
             Text("recognize")
         })
         .font(.title)
         Button(action: {
-            state = .Inactive
+            state.chatState = .Inactive
         }, label: {
             Text("inactive")
         })
         .font(.title)
         Button(action: {
-            text = "Hello"
+            state.chatText = "Hello"
         }, label: {
             Text("show Text")
         })
         .font(.title)
         Button(action: {
-            text = ""
+            state.chatText = ""
         }, label: {
             Text("clear Text")
         })

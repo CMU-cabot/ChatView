@@ -114,7 +114,7 @@ public class ChatStateButtonView: UIView {
 }
 
 @objcMembers
-public class ChatStateButtonViewAnimator: NSObject, TTSUIProtocol {
+public class ChatStateButtonViewAnimator: NSObject {
 
     fileprivate var initialized: Bool = false
 

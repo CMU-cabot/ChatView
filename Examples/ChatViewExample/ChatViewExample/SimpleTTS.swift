@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2016  IBM Corporation, Carnegie Mellon University and others
+ * Copyright (c) 2014, 2024  IBM Corporation, Carnegie Mellon University and others
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +25,10 @@ import ChatView
 import AVFoundation
 
 class SimpleTTS: NSObject, TTSProtocol, AVSpeechSynthesizerDelegate {
-    static let shared = SimpleTTS()
+    static var shared = SimpleTTS()
 
     var map: [String: ()->Void] = [:]
-    let synthe = AVSpeechSynthesizer()
+    var synthe = AVSpeechSynthesizer()
 
     func speak(_ text:String?, callback: @escaping ()->Void) {
         guard let text = text else {

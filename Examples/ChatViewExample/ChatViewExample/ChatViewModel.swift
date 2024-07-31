@@ -23,90 +23,11 @@
 import Foundation
 import UIKit
 import ChatView
-
-public class ChatViewModel: ObservableObject  {
+import SwiftUI
+class ChatViewModel: ObservableObject  {
     @Published public var messages: [ChatMessage] = []
-    @Published var power: Float = 0
-    @Published var chatState: ChatState = .Inactive
-    @Published var chatText: String = ""
-    var stt = STTHelper()
-    var tts = SimpleTTS.shared
-    var client = ChatClientMock()
+    @Published var chatState = ChatStateButtonModel()
 
-    public init() {
-        stt.delegate = self
-        stt.tts = SimpleTTS.shared
-        client.delegate = self
-    }
-    public func startChat() {
-        client.send(message: "")
-    }
-    public func pushed() {
-        if self.stt.recognizing {
-            self.stt.endRecognize()
-        }
-        else {
-            self.stt.restartRecognize()
-        }
-    }
-    private func process(text: String, for user: ChatUser) {
-        messages.append(ChatMessage(user: user, text: text))
-        switch user {
-        case .Agent:
-            self.stt.listen(
-                selfvoice: text,
-                speakendaction: nil,
-                action: { text, code in
-                    self.process(text: text, for: .User)
-                },
-                failure: { error in
-                    print(error)
-                },
-                timeout: {
-                    print("timeout")
-                }
-            )
-        case .User:
-            client.send(message: text)
-        }
-    }
-}
-
-extension ChatViewModel: ChatClientDelegate {
-    public func receive(identifier: String, text: String) {
-        process(text: text, for: .Agent)
-    }
-}
-
-extension ChatViewModel: STTHelperDelegate {
-    public func setPower(_ power: Float) {
-        DispatchQueue.main.async {
-            self.power = power
-        }
-    }
-    public func showText(_ text: String, color: UIColor?) {
-        DispatchQueue.main.async {
-            self.chatText = text
-        }
-    }
-    public func inactive() {
-        DispatchQueue.main.async {
-            self.chatState = .Inactive
-        }
-    }
-    public func listen() {
-        DispatchQueue.main.async {
-            self.chatState = .Listening
-        }
-    }
-    public func speak() {
-        DispatchQueue.main.async {
-            self.chatState = .Speaking
-        }
-    }
-    public func recognize() {
-        DispatchQueue.main.async {
-            self.chatState = .Recognized
-        }
-    }
+    var stt: AppleSTT?
+    var chat: ChatClient?
 }

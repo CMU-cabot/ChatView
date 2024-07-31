@@ -10,6 +10,7 @@
 		7E760AEF2C58190D0041011F /* ChatView in Frameworks */ = {isa = PBXBuildFile; productRef = 7E760AEE2C58190D0041011F /* ChatView */; };
 		7E760AF12C58199F0041011F /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E760AF02C58199F0041011F /* ChatViewModel.swift */; };
 		7E760AF32C581D140041011F /* ChatClientMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E760AF22C581D140041011F /* ChatClientMock.swift */; };
+		7E81ECEF2C59D18D009AF905 /* AppleSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E81ECEE2C59D18D009AF905 /* AppleSTT.swift */; };
 		7EAF2D982C580E1A0020C11D /* ChatViewExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EAF2D972C580E1A0020C11D /* ChatViewExampleApp.swift */; };
 		7EAF2D9A2C580E1A0020C11D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EAF2D992C580E1A0020C11D /* ContentView.swift */; };
 		7EAF2D9C2C580E1B0020C11D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7EAF2D9B2C580E1B0020C11D /* Assets.xcassets */; };
@@ -21,6 +22,7 @@
 /* Begin PBXFileReference section */
 		7E760AF02C58199F0041011F /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		7E760AF22C581D140041011F /* ChatClientMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatClientMock.swift; sourceTree = "<group>"; };
+		7E81ECEE2C59D18D009AF905 /* AppleSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSTT.swift; sourceTree = "<group>"; };
 		7EAF2D942C580E1A0020C11D /* ChatViewExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChatViewExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7EAF2D972C580E1A0020C11D /* ChatViewExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewExampleApp.swift; sourceTree = "<group>"; };
 		7EAF2D992C580E1A0020C11D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -77,6 +79,7 @@
 				7EAF2D992C580E1A0020C11D /* ContentView.swift */,
 				7E760AF22C581D140041011F /* ChatClientMock.swift */,
 				7E760AF02C58199F0041011F /* ChatViewModel.swift */,
+				7E81ECEE2C59D18D009AF905 /* AppleSTT.swift */,
 				7EC219C32C582607004F96A5 /* SimpleTTS.swift */,
 				7EAF2D9B2C580E1B0020C11D /* Assets.xcassets */,
 				7EAF2D9D2C580E1B0020C11D /* Preview Content */,
@@ -179,6 +182,7 @@
 				7E760AF32C581D140041011F /* ChatClientMock.swift in Sources */,
 				7EAF2D9A2C580E1A0020C11D /* ContentView.swift in Sources */,
 				7E760AF12C58199F0041011F /* ChatViewModel.swift in Sources */,
+				7E81ECEF2C59D18D009AF905 /* AppleSTT.swift in Sources */,
 				7EAF2D982C580E1A0020C11D /* ChatViewExampleApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
