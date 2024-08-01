@@ -20,9 +20,10 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
+import Combine
 import Foundation
 
-public typealias ChatClientCallback = ((String, String) -> Void)
+public typealias ChatClientCallback = ((String, PassthroughSubject<String, any Error>) -> Void)
 
 public protocol ChatClient {
     var callback: ChatClientCallback? { get set }

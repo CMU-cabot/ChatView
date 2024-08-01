@@ -21,9 +21,10 @@
  *******************************************************************************/
 
 import Foundation
+import Combine
 
 public protocol TTSProtocol {
-    func speak(_ text: String?, callback: @escaping ()->Void)
+    func speak(_ text: PassthroughSubject<String, Error>?, callback: @escaping ()->Void)
     func stop()
     func stop(_ immediate: Bool)
     func vibrate()

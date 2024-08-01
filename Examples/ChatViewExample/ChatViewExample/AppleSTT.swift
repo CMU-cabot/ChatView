@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 import ChatView
+import Combine
 import Foundation
 import UIKit
 import AVFoundation
@@ -29,6 +30,7 @@ import SwiftUI
 
 @objcMembers
 open class AppleSTT: NSObject, STTProtocol, AVCaptureAudioDataOutputSampleBufferDelegate, SFSpeechRecognizerDelegate {
+
     public var tts: TTSProtocol?
     public var speaking: Bool = false
     public var recognizing: Bool = false
@@ -62,9 +64,9 @@ open class AppleSTT: NSObject, STTProtocol, AVCaptureAudioDataOutputSampleBuffer
     }
 
     public func listen(
-        selfvoice: String?,
-        speakendaction: ((String)->Void)?,
-        action: @escaping (String, UInt64)->Void,
+        selfvoice: PassthroughSubject<String, any Error>?,
+        speakendaction: ((PassthroughSubject<String, any Error>?)->Void)?,
+        action: @escaping (PassthroughSubject<String, any Error>?, UInt64)->Void,
         failure: @escaping (NSError)->Void,
         timeout: @escaping ()->Void
     ) {
@@ -153,10 +155,10 @@ open class AppleSTT: NSObject, STTProtocol, AVCaptureAudioDataOutputSampleBuffer
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
 
-    private var last_action: ((String, UInt64)->Void)?
+    private var last_action: ((PassthroughSubject<String, Error>, UInt64)->Void)?
     private var last_failure:(NSError)->Void = {arg in}
     private var last_timeout:()->Void = { () in}
-    private var last_text: String = ""
+    private var last_text: String?
 
     private var stopstt:()->()
     private let waitDelay = 0.0
@@ -267,7 +269,7 @@ open class AppleSTT: NSObject, STTProtocol, AVCaptureAudioDataOutputSampleBuffer
         }
     }
 
-    private func startRecognize(_ action: @escaping (String, UInt64)->Void, failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
+    private func startRecognize(_ action: @escaping (PassthroughSubject<String, Error>, UInt64)->Void, failure: @escaping (NSError)->Void,  timeout: @escaping ()->Void){
         self.paused = false
 
         self.last_timeout = timeout
@@ -275,15 +277,19 @@ open class AppleSTT: NSObject, STTProtocol, AVCaptureAudioDataOutputSampleBuffer
 
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         recognitionRequest!.shouldReportPartialResults = true
-        last_text = ""
+        last_text = nil
         NSLog("Start recognizing")
         recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest!, resultHandler: { [weak self] (result, e) in
             guard let weakself = self else {
                 return
             }
             let complete:()->Void = {
-                if weakself.last_text.count == 0 { return }
-                action(weakself.last_text, 0)
+                if let last_text = weakself.last_text {
+                    let text = PassthroughSubject<String, Error>()
+                    action(text, 0)
+                    text.send(last_text)
+                    text.send(completion: .finished)
+                }
             }
 
             if e != nil {
@@ -345,11 +351,13 @@ open class AppleSTT: NSObject, STTProtocol, AVCaptureAudioDataOutputSampleBuffer
 
             let str = weakself.last_text
             let isFinal:Bool = result.isFinal;
-            let length:Int = str.count
-            NSLog("Result = \(str), Length = \(length), isFinal = \(isFinal)");
-            if (str.count > 0) {
+            let length:Int = str?.count ?? 0
+            if (length > 0) {
                 DispatchQueue.main.async {
-                    weakself.state?.wrappedValue.chatText = str
+                    if let str {
+                        NSLog("Result = \(str), Length = \(length), isFinal = \(isFinal)");
+                        weakself.state?.wrappedValue.chatText = str
+                    }
                 }
                 if isFinal{
                     complete()

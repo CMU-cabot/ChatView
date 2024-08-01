@@ -20,26 +20,37 @@
  * THE SOFTWARE.
  *******************************************************************************/
  
+import Combine
 import UIKit
 import ChatView
 import AVFoundation
 
 class SimpleTTS: NSObject, TTSProtocol, AVSpeechSynthesizerDelegate {
+
     static var shared = SimpleTTS()
 
     var map: [String: ()->Void] = [:]
     var synthe = AVSpeechSynthesizer()
+    var text: String = ""
+    var cancellables = Set<AnyCancellable>()
 
-    func speak(_ text:String?, callback: @escaping ()->Void) {
-        guard let text = text else {
-            return callback()
+    func speak(_ text:PassthroughSubject<String, any Error>?, callback: @escaping ()->Void) {
+        guard let text else {
+            callback()
+            return
         }
 
-        synthe.delegate = self
-        let u = AVSpeechUtterance(string: text)
-        map[text] = callback
-        NSLog("speech started: "+text)
-        synthe.speak(u)
+        text.sink(receiveCompletion: { _ in
+            self.synthe.delegate = self
+            let u = AVSpeechUtterance(string: self.text)
+            self.map[self.text] = callback
+            NSLog("speech started: "+self.text)
+            self.synthe.speak(u)
+            self.text = ""
+        }, receiveValue: { chunk in
+            self.text.append(chunk)
+        })
+        .store(in: &cancellables)
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {

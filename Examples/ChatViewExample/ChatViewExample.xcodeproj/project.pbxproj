@@ -81,7 +81,6 @@
 				7E760AF02C58199F0041011F /* ChatViewModel.swift */,
 				7E81ECEE2C59D18D009AF905 /* AppleSTT.swift */,
 				7EC219C32C582607004F96A5 /* SimpleTTS.swift */,
-				7EAF2D9B2C580E1B0020C11D /* Assets.xcassets */,
 				7EAF2D9D2C580E1B0020C11D /* Preview Content */,
 			);
 			path = ChatViewExample;
@@ -90,6 +89,7 @@
 		7EAF2D9D2C580E1B0020C11D /* Preview Content */ = {
 			isa = PBXGroup;
 			children = (
+				7EAF2D9B2C580E1B0020C11D /* Assets.xcassets */,
 				7EAF2D9E2C580E1B0020C11D /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";

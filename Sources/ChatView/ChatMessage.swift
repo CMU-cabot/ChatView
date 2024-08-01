@@ -31,6 +31,12 @@ public class ChatMessage: Identifiable, ObservableObject {
     public var user: ChatUser
     @Published var text: String
     
+    public var combined_text: String {
+        get {
+            return text
+        }
+    }
+
     public init(id: UUID = UUID(), user: ChatUser, text: String) {
         self.id = id
         self.user = user

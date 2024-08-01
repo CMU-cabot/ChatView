@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
+import Combine
 import SwiftUI
 import ChatView
 
@@ -31,12 +32,7 @@ public struct ContentView: View {
         HStack {
             Spacer()
             ChatStateButton(action: {
-                if model.stt?.recognizing == true {
-                    model.stt?.endRecognize()
-                }
-                else {
-                    model.stt?.restartRecognize()
-                }
+                model.toggleChat()
             }, state: $model.chatState)
             .frame(width: 150)
             Spacer()
@@ -44,26 +40,7 @@ public struct ContentView: View {
         .frame(height: 200)
         .onAppear() {
             model.stt = AppleSTT(state: $model.chatState, tts: SimpleTTS.shared)
-
-            model.chat = ChatClientMock() { identifier, text in
-                model.messages.append(ChatMessage(user: .Agent, text: text))
-                model.stt?.listen(
-                    selfvoice: text,
-                    speakendaction: { text in
-                        print("speakend \(text)")
-                    },
-                    action: { text, code in
-                        self.model.messages.append(ChatMessage(user: .User, text: text))
-                        self.model.chat?.send(message: text)
-                    },
-                    failure: { error in
-                        print(error)
-                    },
-                    timeout: {
-                        print("timeout")
-                    }
-                )
-            }
+            model.chat = ChatClientMock(callback: model.process)
             model.chat?.send(message: "")
         }
     }

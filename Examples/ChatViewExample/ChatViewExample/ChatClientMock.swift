@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
+import Combine
 import Foundation
 import ChatView
 
@@ -33,12 +34,19 @@ class ChatClientMock: ChatClient {
     func send(message: String) {
         if message.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.callback?(UUID().uuidString, self.welcome_text)
+                self.call_callback(text: self.welcome_text)
             }
             return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.callback?(UUID().uuidString, message)
+            self.call_callback(text: message)
         }
+    }
+
+    func call_callback(text: String) {
+        let pub = PassthroughSubject<String, any Error>()
+        self.callback?(UUID().uuidString, pub)
+        pub.send(text)
+        pub.send(completion: .finished)
     }
 }

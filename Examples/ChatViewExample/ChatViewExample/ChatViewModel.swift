@@ -20,14 +20,63 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
+import Combine
 import Foundation
 import UIKit
 import ChatView
 import SwiftUI
+
 class ChatViewModel: ObservableObject  {
+    public var cancellables = Set<AnyCancellable>()
     @Published public var messages: [ChatMessage] = []
     @Published var chatState = ChatStateButtonModel()
 
     var stt: AppleSTT?
     var chat: ChatClient?
+    private var map: [String: ChatMessage] = [:]
+    private var map2: [String: PassthroughSubject<String, Error>] = [:]
+
+    func toggleChat() {
+        if self.stt?.recognizing == true {
+            self.stt?.endRecognize()
+        }
+        else {
+            self.stt?.restartRecognize()
+        }
+    }
+
+    func process(_ identifier: String, _ text: PassthroughSubject<String, Error>) {
+        let message = ChatMessage(user: .Agent, text: "")
+        messages.append(message)
+        text.sink(receiveCompletion: {_ in
+            print("complete")
+        }, receiveValue: { chunk in
+            print("chunk: \(chunk)")
+            message.append(text: chunk)
+        })
+        .store(in: &self.cancellables)
+
+        stt?.listen(
+            selfvoice: text,
+            speakendaction: { text in
+                if let text {
+                    print("speakend \(text)")
+                }
+            },
+            action: { text, code in
+                var buffer = ""
+                text?.sink(receiveCompletion: { _ in
+                    self.messages.append(ChatMessage(user: .User, text: buffer))
+                    self.chat?.send(message: buffer)
+                }, receiveValue: { chunk in buffer += chunk})
+                .store(in: &self.cancellables)
+            },
+            failure: { error in
+                print(error)
+            },
+            timeout: {
+                print("timeout")
+            }
+        )
+    }
 }

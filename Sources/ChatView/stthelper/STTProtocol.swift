@@ -20,15 +20,16 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
+import Combine
 import Foundation
 import SwiftUI
 
 public protocol STTProtocol {
     var state: Binding<ChatStateButtonModel>? { get set }
     func listen(
-        selfvoice: String?,
-        speakendaction: ((String)->Void)?,
-        action: @escaping (String, UInt64)->Void,
+        selfvoice: PassthroughSubject<String, Error>?,
+        speakendaction: ((PassthroughSubject<String, Error>?)->Void)?,
+        action: @escaping (PassthroughSubject<String, Error>?, UInt64)->Void,
         failure: @escaping (NSError)->Void,
         timeout: @escaping ()->Void
     )
