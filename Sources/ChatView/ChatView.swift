@@ -32,11 +32,19 @@ public struct ChatView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            ForEach(self.messages) { message in
-                MessageView(message: message)
+        ScrollViewReader { proxy in
+            ScrollView {
+                ForEach(self.messages) { message in
+                    MessageView(message: message)
+                }
+                .padding(16)
+                Color.clear.id("bottom").frame(height: 0).padding(0)
             }
-            .padding(16)
+            .onChange(of: self.messages.count) { _ in
+                withAnimation {
+                    proxy.scrollTo("bottom")
+                }
+            }
         }
     }
 }
