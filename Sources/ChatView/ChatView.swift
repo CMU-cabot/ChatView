@@ -35,12 +35,12 @@ public struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 ForEach(self.messages) { message in
-                    MessageView(message: message)
+                    MessageView(message: message, proxy: proxy)
                 }
                 .padding(16)
                 Color.clear.id("bottom").frame(height: 0).padding(0)
             }
-            .onChange(of: self.messages.map {$0.text}) { _ in
+            .onChange(of: self.messages.count) { _ in
                 withAnimation {
                     proxy.scrollTo("bottom")
                 }
@@ -55,6 +55,7 @@ struct MessageView: View {
     @State private var offset: CGFloat = 32
     @State private var scale: CGFloat = 0.1
     @State private var opacity: Double = 0.0
+    var proxy: ScrollViewProxy
 
     var body: some View {
         switch message.user {
@@ -73,6 +74,11 @@ struct MessageView: View {
                     }
                 Spacer()
             }
+            .onChange(of: message.text) { _ in
+                withAnimation {
+                    proxy.scrollTo("bottom")
+                }
+            }
         case .User:
             HStack {
                 Spacer()
@@ -88,6 +94,11 @@ struct MessageView: View {
                     }
             }
             .padding(.leading, 32)
+            .onChange(of: message.text) { _ in
+                withAnimation {
+                    proxy.scrollTo("bottom")
+                }
+            }
         }
     }
 }

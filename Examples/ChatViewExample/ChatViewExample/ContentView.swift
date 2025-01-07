@@ -91,3 +91,36 @@ public struct ContentView: View {
     model.chatState.chatState = .Speaking
     return ContentView(model: model)
 }
+
+#Preview("ChatView Scrolling") {
+    let model = ChatViewModel()
+    let agentMessage = ChatMessage(user: .Agent, text: "Hello")
+    let userMessage = ChatMessage(user: .User, text: "Hello")
+    func expand_loop(_ count: Int = 5) {
+        DispatchQueue.main.asyncAfter(deadline: .now()+1) {
+            agentMessage.append(text: "\nHello")
+            DispatchQueue.main.asyncAfter(deadline: .now()+1) {
+                userMessage.append(text: "\nHello")
+                if count > 0 {
+                    expand_loop(count - 1)
+                }
+            }
+        }
+
+    }
+    func add_loop(_ count: Int = 5) {
+        DispatchQueue.main.asyncAfter(deadline: .now()+1) {
+            model.messages.append(agentMessage)
+            DispatchQueue.main.asyncAfter(deadline: .now()+1) {
+                model.messages.append(userMessage)
+                if count > 0 {
+                    add_loop(count - 1)
+                } else{
+                    expand_loop()
+                }
+            }
+        }
+    }
+    add_loop()
+    return ContentView(model: model)
+}
