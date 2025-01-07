@@ -40,7 +40,7 @@ public struct ChatView: View {
                 .padding(16)
                 Color.clear.id("bottom").frame(height: 0).padding(0)
             }
-            .onChange(of: self.messages.count) { _ in
+            .onChange(of: self.messages.map {$0.text}) { _ in
                 withAnimation {
                     proxy.scrollTo("bottom")
                 }
