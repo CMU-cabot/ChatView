@@ -82,16 +82,31 @@ struct MessageView: View {
         case .User:
             HStack {
                 Spacer()
-                Text(message.text)
-                    .userMessageStyle()
-                    .opacity(opacity)
-                    .offset(y: offset)
-                    .onAppear {
-                        withAnimation(.easeInOut(duration: duration)) {
-                            opacity = 1.0
-                            offset = 0
+                if message.text.hasPrefix("data:image") {
+                    Image(base64String: message.text)?
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .userMessageStyle()
+                        .opacity(opacity)
+                        .offset(y: offset)
+                        .onAppear {
+                            withAnimation(.easeInOut(duration: duration)) {
+                                opacity = 1.0
+                                offset = 0
+                            }
                         }
-                    }
+                } else {
+                    Text(message.text)
+                        .userMessageStyle()
+                        .opacity(opacity)
+                        .offset(y: offset)
+                        .onAppear {
+                            withAnimation(.easeInOut(duration: duration)) {
+                                opacity = 1.0
+                                offset = 0
+                            }
+                        }
+                }
             }
             .padding(.leading, 32)
             .onChange(of: message.text) { _ in
@@ -100,5 +115,15 @@ struct MessageView: View {
                 }
             }
         }
+    }
+}
+
+extension Image {
+    init?(base64String: String) {
+        let array = base64String.components(separatedBy: "base64,")
+        if array.count == 0 {return nil}
+        guard let data = Data(base64Encoded: array[1]) else { return nil }
+        guard let uiImage = UIImage(data: data) else { return nil }
+        self = Image(uiImage: uiImage)
     }
 }
