@@ -86,7 +86,7 @@ struct MessageView: View {
                     Image(base64String: message.text)?
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .userMessageStyle()
+//                        .userMessageStyle()
                         .opacity(opacity)
                         .offset(y: offset)
                         .onAppear {
