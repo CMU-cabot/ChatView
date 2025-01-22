@@ -45,6 +45,11 @@ public struct ChatView: View {
                     proxy.scrollTo("bottom")
                 }
             }
+            .onAppear() {
+                withAnimation {
+                    proxy.scrollTo("bottom")
+                }
+            }
         }
     }
 }
