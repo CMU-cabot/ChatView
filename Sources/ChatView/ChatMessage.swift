@@ -30,7 +30,6 @@ public class ChatMessage: Identifiable, ObservableObject {
     public var id: UUID
     public var user: ChatUser
     @Published var text: String
-    var image: Image?
     
     public var combined_text: String {
         get {
@@ -41,12 +40,7 @@ public class ChatMessage: Identifiable, ObservableObject {
     public init(id: UUID = UUID(), user: ChatUser, text: String) {
         self.id = id
         self.user = user
-        if text.hasPrefix("data:image") {
-            self.text = ""
-            self.image = Image(base64String: text)
-        } else {
-            self.text = text
-        }
+        self.text = text
     }
     
     public func append(text: String) {

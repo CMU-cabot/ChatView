@@ -87,8 +87,8 @@ struct MessageView: View {
         case .User:
             HStack {
                 Spacer()
-                if let image = message.image {
-                    image
+                if message.text.hasPrefix("data:image") {
+                    Image(base64String: message.text)?
                         .resizable()
                         .aspectRatio(contentMode: .fit)
 //                        .userMessageStyle()
