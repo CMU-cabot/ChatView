@@ -22,13 +22,18 @@
 
 
 import SwiftUI
+import Translation
 
 
 public struct ChatView: View {
     var messages: [ChatMessage]
+    private let translate: Bool
+    @State var translationShown: Bool = false
+    @State var translationText: String = ""
 
-    public init(messages: [ChatMessage]) {
+    public init(messages: [ChatMessage], translate: Bool = false) {
         self.messages = messages
+        self.translate = translate
     }
 
     public var body: some View {
@@ -36,6 +41,12 @@ public struct ChatView: View {
             ScrollView {
                 ForEach(self.messages) { message in
                     MessageView(message: message, proxy: proxy)
+                        .onTapGesture {
+                            if translate {
+                                translationText = message.text
+                                translationShown = true
+                            }
+                        }
                 }
                 .padding(16)
                 Color.clear.id("bottom").frame(height: 0).padding(0)
@@ -45,8 +56,26 @@ public struct ChatView: View {
                     proxy.scrollTo("bottom")
                 }
             }
+            .onAppear() {
+                withAnimation {
+                    proxy.scrollTo("bottom")
+                }
+            }
+            .translateView(isPresented: $translationShown, text: translationText, required: translate)
         }
     }
+}
+
+extension View {
+    @ViewBuilder
+    public func translateView(isPresented: Binding<Bool>, text: String, required: Bool) -> some View {
+        if required {
+            self.translationPresentation(isPresented: isPresented, text: text)
+        } else {
+            self
+        }
+    }
+
 }
 
 struct MessageView: View {
